@@ -3,6 +3,8 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
 namespace HexGame {
+    using System.Collections.Generic;
+
     /// <summary>
     /// This is the main type for your game.
     /// </summary>
@@ -10,9 +12,20 @@ namespace HexGame {
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
 
+        // Camera
+        private Camera Camera { get; set; }
+
+        private Input Input { get; set; }
+
+        private BasicEffect BasicEffect { get; set; }
+
+        private Hexagon Hexagon { get; set; }
+
+
         public Game1() {
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
+            IsMouseVisible = true;
         }
 
         /// <summary>
@@ -25,7 +38,27 @@ namespace HexGame {
             // TODO: Add your initialization logic here
 
             base.Initialize();
+
+            Input = new Input();
+            Input.AddBindings(new Dictionary<string, Keys[]> {
+                [Commands.CameraStrafeLeft] = new []{Keys.Left},
+
+            });
+
+
+            Camera = new Camera(GraphicsDevice.DisplayMode.AspectRatio, Input);
+            
+
+            BasicEffect = new BasicEffect(GraphicsDevice) {
+                VertexColorEnabled = true,
+            };
+
+            Hexagon = new Hexagon(GraphicsDevice, 0.5f);
         }
+        
+
+
+        
 
         /// <summary>
         /// LoadContent will be called once per game and is the place to load
@@ -52,8 +85,11 @@ namespace HexGame {
         /// </summary>
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime) {
-            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
+            var ks = Keyboard.GetState();
+            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || ks.IsKeyDown(Keys.Escape))
                 Exit();
+            
+            Camera.Update(gameTime);
 
             // TODO: Add your update logic here
 
@@ -65,9 +101,23 @@ namespace HexGame {
         /// </summary>
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime) {
-            GraphicsDevice.Clear(Color.CornflowerBlue);
 
-            // TODO: Add your drawing code here
+            BasicEffect.Projection = Camera.ProjectionMatrix;
+            BasicEffect.View = Camera.ViewMatrix;
+            BasicEffect.World = Camera.WorldMatrix;
+
+            GraphicsDevice.Clear(Color.Black);
+            GraphicsDevice.SetVertexBuffer(Hexagon.VertexBuffer);
+            GraphicsDevice.Indices = Hexagon.IndexBuffer;
+
+            var rasterState = new RasterizerState { CullMode = CullMode.None };
+            GraphicsDevice.RasterizerState = rasterState;
+
+            foreach (var pass in BasicEffect.CurrentTechnique.Passes) {
+                pass.Apply();
+                GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 6);
+            }
+
 
             base.Draw(gameTime);
         }
