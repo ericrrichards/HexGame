@@ -40,10 +40,19 @@ namespace HexGame {
             base.Initialize();
 
             Input = new Input();
-            Input.AddBindings(new Dictionary<string, Keys[]> {
-                [Commands.CameraStrafeLeft] = new []{Keys.Left},
 
-            });
+            var bindings = new Dictionary<string, List<Keys>> {
+                [Commands.CameraStrafeLeft] = new List<Keys>{Keys.Left},
+                [Commands.CameraStrafeRight] = new List<Keys> { Keys.Right},
+                [Commands.CameraForward] = new List<Keys> { Keys.Up},
+                [Commands.CameraBackward] = new List<Keys> { Keys.Down},
+                [Commands.CameraZoomIn] = new List<Keys> { Keys.OemPlus, Keys.Add},
+                [Commands.CameraZoomOut] = new List<Keys> { Keys.OemMinus, Keys.Subtract},
+
+                [Commands.GameExit] = new List<Keys> { Keys.Escape}
+            };
+
+            Input.AddBindings(bindings);
 
 
             Camera = new Camera(GraphicsDevice.DisplayMode.AspectRatio, Input);
@@ -85,9 +94,11 @@ namespace HexGame {
         /// </summary>
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime) {
-            var ks = Keyboard.GetState();
-            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || ks.IsKeyDown(Keys.Escape))
+            Input.Update();
+
+            if (Input.IsPressed(Commands.GameExit)) {
                 Exit();
+            }
             
             Camera.Update(gameTime);
 

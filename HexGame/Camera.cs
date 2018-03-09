@@ -1,70 +1,6 @@
 ﻿namespace HexGame {
-    using System.Collections.Generic;
-    using System.Linq;
-
     using Microsoft.Xna.Framework;
-    using Microsoft.Xna.Framework.Input;
 
-
-    public class Input {
-        private KeyboardState _current;
-        private KeyboardState _previous;
-
-        // TODO mouse and gamepad
-
-        private Dictionary<string, List<Keys>> BindingMap { get; }
-
-
-        public Input() {
-            BindingMap = new Dictionary<string, List<Keys>>();
-        }
-
-        public void Update() {
-            _previous = _current;
-            _current = Keyboard.GetState();
-        }
-
-        public bool IsPressed(string vkey) {
-            if (BindingMap.TryGetValue(vkey, out var keys)) {
-                return keys.Any(k => _current.IsKeyDown(k));
-            }
-            return false;
-        }
-
-
-        public void SetBinding(string vkey, params Keys[] keys) {
-            BindingMap[vkey] = keys.ToList();
-        }
-
-        public void AddBinding(string vkey, params Keys[] keys) {
-            if (!BindingMap.ContainsKey(vkey)) {
-                BindingMap[vkey] = new List<Keys>();
-            }
-            BindingMap[vkey].AddRange(keys);
-        }
-
-        public void RemoveBinding(string vkey, Keys key) {
-            if (BindingMap.TryGetValue(vkey, out var keys)) {
-                keys.Remove(key);
-            }
-        }
-
-        public void AddBindings(Dictionary<string, Keys[]> bindings) {
-            foreach (var binding in bindings) {
-                AddBinding(binding.Key, binding.Value);
-            }
-        }
-    }
-
-    public static class Commands {
-        public const string CameraStrafeLeft = "Camera_StrafeLeft";
-        public const string CameraStrafeRight = "Camera_StrafeRight";
-        public const string CameraForward = "Camera_Forward";
-        public const string CameraBackward = "Camera_Backward";
-        public const string CameraZoomIn = "Camera_ZoomIn";
-        public const string CameraZoomOut = "Camera_ZoomOut";
-
-    }
 
     public class Camera {
         private Vector3 CameraTarget { get; set; }
@@ -73,7 +9,7 @@
         public Matrix ViewMatrix { get; set; }
         public Matrix WorldMatrix { get; set; }
         private float CameraSpeed { get; set; } = 1f;
-        private Input _input;
+        private readonly Input _input;
 
 
         public Camera(float aspectRatio, Input input) {
