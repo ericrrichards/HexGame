@@ -3,14 +3,17 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
 namespace HexGame {
+    using System;
     using System.Collections.Generic;
 
     /// <summary>
     /// This is the main type for your game.
     /// </summary>
     public class Game1 : Game {
+        private const float HexSize = 0.5f;
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
+        private SpriteFont _font;
 
         // Camera
         private Camera Camera { get; set; }
@@ -19,8 +22,7 @@ namespace HexGame {
 
         private BasicEffect BasicEffect { get; set; }
 
-        private Hexagon Hexagon { get; set; }
-
+        private HexMap Map { get; set; }
 
         public Game1() {
             graphics = new GraphicsDeviceManager(this);
@@ -48,6 +50,10 @@ namespace HexGame {
                 [Commands.CameraBackward] = new List<Keys> { Keys.Down},
                 [Commands.CameraZoomIn] = new List<Keys> { Keys.OemPlus, Keys.Add},
                 [Commands.CameraZoomOut] = new List<Keys> { Keys.OemMinus, Keys.Subtract},
+                [Commands.CameraOrbitRight] = new List<Keys>{Keys.OemPeriod},
+                [Commands.CameraOrbitLeft] = new List<Keys>{Keys.OemComma},
+                [Commands.CameraOrbitDown] = new List<Keys>{Keys.OemQuestion},
+                [Commands.CameraOrbitUp] = new List<Keys>{Keys.OemQuotes},
 
                 [Commands.GameExit] = new List<Keys> { Keys.Escape}
             };
@@ -55,14 +61,16 @@ namespace HexGame {
             Input.AddBindings(bindings);
 
 
-            Camera = new Camera(GraphicsDevice.DisplayMode.AspectRatio, Input);
-            
+            Camera = new Camera( Input);
+            Camera.SetLens(MathHelper.ToRadians(45), GraphicsDevice.DisplayMode.AspectRatio, .01f, 1000f);
+            Camera.LookAt(new Vector3(0, 10, 1), Vector3.Zero, Vector3.Up );
 
             BasicEffect = new BasicEffect(GraphicsDevice) {
                 VertexColorEnabled = true,
             };
 
-            Hexagon = new Hexagon(GraphicsDevice, 0.5f);
+            Map = new HexMap(GraphicsDevice, 15, 10);
+
         }
         
 
@@ -76,7 +84,7 @@ namespace HexGame {
         protected override void LoadContent() {
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
-
+            _font = Content.Load<SpriteFont>("default");
             // TODO: use this.Content to load your game content here
         }
 
@@ -115,22 +123,36 @@ namespace HexGame {
 
             BasicEffect.Projection = Camera.ProjectionMatrix;
             BasicEffect.View = Camera.ViewMatrix;
-            BasicEffect.World = Camera.WorldMatrix;
+            //BasicEffect.World = Camera.WorldMatrix;
 
             GraphicsDevice.Clear(Color.Black);
-            GraphicsDevice.SetVertexBuffer(Hexagon.VertexBuffer);
-            GraphicsDevice.Indices = Hexagon.IndexBuffer;
+           
+            GraphicsDevice.SetVertexBuffer(Map.VertexBuffer);
+            GraphicsDevice.Indices = Map.IndexBuffer;
 
-            var rasterState = new RasterizerState { CullMode = CullMode.None };
-            GraphicsDevice.RasterizerState = rasterState;
+            //GraphicsDevice.RasterizerState = RasterizerState.CullNone;
 
             foreach (var pass in BasicEffect.CurrentTechnique.Passes) {
                 pass.Apply();
-                GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 6);
+                GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, Map.Triangles);
             }
-
+            DrawHexCoords();
 
             base.Draw(gameTime);
+        }
+
+        private void DrawHexCoords() {
+            spriteBatch.Begin();
+            foreach (var row in Map.Hexes) {
+                foreach (var hex in row) {
+                    var projected = GraphicsDevice.Viewport.Project(hex.Position, Camera.ProjectionMatrix, Camera.ViewMatrix, Camera.WorldMatrix);
+                    var screen = new Vector2(projected.X, projected.Y);
+                    var pos = $"{hex.MapPos.X}, {hex.MapPos.Y}";
+                    var m = _font.MeasureString(pos);
+                    spriteBatch.DrawString(_font, pos, screen - m / 2, Color.White);
+                }
+            }
+            spriteBatch.End();
         }
     }
 }

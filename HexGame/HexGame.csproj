@@ -45,6 +45,7 @@
     <Compile Include="Commands.cs" />
     <Compile Include="Game1.cs" />
     <Compile Include="Hexagon.cs" />
+    <Compile Include="HexMap.cs" />
     <Compile Include="Input.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
