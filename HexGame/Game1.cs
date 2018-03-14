@@ -73,8 +73,8 @@ namespace HexGame {
             BasicEffect = new BasicEffect(GraphicsDevice) {
                 VertexColorEnabled = true,
             };
+            ;
 
-            
 
         }
         
@@ -91,6 +91,9 @@ namespace HexGame {
             spriteBatch = new SpriteBatch(GraphicsDevice);
             _font = Content.Load<SpriteFont>("default");
             Map = new HexMap(GraphicsDevice, 15, 10, _font);
+
+            
+
             // TODO: use this.Content to load your game content here
         }
 
@@ -132,7 +135,19 @@ namespace HexGame {
                 var pickedHex = Map.PickHex(ray);
                 if (pickedHex != null) {
                     DisplayText = "Over: " + pickedHex.MapPos;
+                    var mapDirty = false;
+                    if (Input.MouseClicked(true)) {
+                        pickedHex.Raise(0.25f);
+                        mapDirty = true;
+                    } else if (Input.MouseClicked(false)) {
+                        pickedHex.Raise(-0.25f);
+                        mapDirty = true;
+                    }
+                    if (mapDirty) {
+                        Map.Rebuild(GraphicsDevice);
+                    }
                 }
+                
             }
 
 
@@ -153,7 +168,9 @@ namespace HexGame {
             BasicEffect.View = Camera.ViewMatrix;
 
             GraphicsDevice.Clear(Color.Black);
-           
+            GraphicsDevice.DepthStencilState = DepthStencilState.Default;
+            //BasicEffect.EnableDefaultLighting();
+
             Map.Draw(GraphicsDevice, BasicEffect, spriteBatch, Camera);
             
             DrawDebugText();

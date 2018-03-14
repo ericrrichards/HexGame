@@ -11,16 +11,16 @@
         public int Count => Width * Height;
         public int TriangleCount => Count * 6;
 
-        public float MaxHeight { get; } = 25;
+        public float MaxHeight { get; } = 5;
 
         public float HexSize { get; }
         public List<List<Hexagon>> Hexes { get; }
 
-        public List<Vector3> Vertices { get; }= new List<Vector3>();
-        public List<uint> Indices { get; } = new List<uint>();
+        public List<Vector3> Vertices { get; private set; }
+        public List<uint> Indices { get; private set; }
 
-        public VertexBuffer VertexBuffer { get; }
-        public IndexBuffer IndexBuffer { get; }
+        public VertexBuffer VertexBuffer { get; set; }
+        public IndexBuffer IndexBuffer { get; set; }
 
         public VertexBuffer GridVertexBuffer { get; private set; }
         public IndexBuffer GridIndexBuffer { get; private set; }
@@ -33,7 +33,7 @@
 
         private readonly SpriteFont _font;
 
-        public HexMap(GraphicsDevice gd, int width, int height, SpriteFont font=null) {
+        public HexMap(GraphicsDevice gd, int width, int height, SpriteFont font = null) {
             _font = font;
             HexSize = 0.5f;
             Width = width;
@@ -41,8 +41,6 @@
             Hexes = new List<List<Hexagon>>();
 
             var hexHeight = Hexagon.Height(HexSize);
-            uint i = 0;
-            var vertToIndex = new Dictionary<Vector3, uint>();
             for (var x = 0; x < Width; x++) {
                 Hexes.Add(new List<Hexagon>());
                 for (var y = 0; y < Height; y++) {
@@ -56,6 +54,28 @@
                         MapPos = new Vector2(x, y)
                     };
                     Hexes[x].Add(hexagon);
+                }
+            }
+
+            BuildHexBuffers(gd);
+
+            BuildGridBuffers(gd);
+
+        }
+        public void Rebuild(GraphicsDevice gd) {
+            BuildHexBuffers(gd);
+
+            BuildGridBuffers(gd);
+        }
+
+        private void BuildHexBuffers(GraphicsDevice gd) {
+            Vertices = new List<Vector3>();
+            Indices = new List<uint>();
+            uint i = 0;
+            var vertToIndex = new Dictionary<Vector3, uint>();
+
+            foreach (var row in Hexes) {
+                foreach (var hexagon in row) {
                     foreach (var c in Hexagon.PointOrder) {
                         var p = hexagon.Points[c];
                         if (!vertToIndex.ContainsKey(p)) {
@@ -69,14 +89,31 @@
                     }
                 }
             }
-            VertexBuffer = new VertexBuffer(gd, typeof(VertexPositionColor), Vertices.Count, BufferUsage.WriteOnly);
-            var vpcs = Vertices.Select(v => new VertexPositionColor(v, GetColor(v))).ToArray();
+
+
+            VertexBuffer = new VertexBuffer(gd, typeof(VertexPositionColorNormal), Vertices.Count, BufferUsage.WriteOnly);
+            var vpcs = Vertices.Select(v => new VertexPositionColorNormal(v, GetColor(v), Vector3.Zero)).ToArray();
+            GenerateNormals(vpcs, Indices);
             VertexBuffer.SetData(vpcs);
             IndexBuffer = new IndexBuffer(gd, IndexElementSize.ThirtyTwoBits, Indices.Count, BufferUsage.WriteOnly);
             IndexBuffer.SetData(Indices.ToArray());
+        }
 
-            BuildGridBuffers(gd);
-
+        private void GenerateNormals(VertexPositionColorNormal[] vertices, List<uint> indices) {
+            for (var i = 0; i < vertices.Length; i++) {
+                vertices[i].Normal = Vector3.Zero;
+            }
+            for (int i = 0; i < indices.Count/3; i++) {
+                var v1 = vertices[indices[i * 3 + 1]].Position - vertices[indices[i * 3]].Position;
+                var v2 = vertices[indices[i * 3]].Position - vertices[indices[i * 3 + 2]].Position;
+                var normal = Vector3.Normalize(Vector3.Cross(v1, v2));
+                vertices[indices[i * 3]].Normal += normal;
+                vertices[indices[i * 3 + 1]].Normal += normal;
+                vertices[indices[i * 3 + 2]].Normal += normal;
+            }
+            //for (var i = 0; i < vertices.Length; i++) {
+            //    vertices[i].Normal.Normalize();
+            //}
         }
 
         private void BuildGridBuffers(GraphicsDevice gd) {
@@ -86,23 +123,23 @@
             foreach (var row in Hexes) {
                 foreach (var hex in row) {
                     var borderVerts = hex.Border;
-                    verts.AddRange(borderVerts.Select(v=>new VertexPositionColor(v, Color.Red)));
+                    verts.AddRange(borderVerts.Select(v => new VertexPositionColor(v+new Vector3(0,.01f, 0), Color.Red)));
                     indices.Add(i);
-                    indices.Add(i+1);
+                    indices.Add(i + 1);
 
-                    indices.Add(i+1);
-                    indices.Add(i+2);
+                    indices.Add(i + 1);
+                    indices.Add(i + 2);
 
-                    indices.Add(i+2);
-                    indices.Add(i+3);
+                    indices.Add(i + 2);
+                    indices.Add(i + 3);
 
-                    indices.Add(i+3);
-                    indices.Add(i+4);
+                    indices.Add(i + 3);
+                    indices.Add(i + 4);
 
-                    indices.Add(i+4);
-                    indices.Add(i+5);
+                    indices.Add(i + 4);
+                    indices.Add(i + 5);
 
-                    indices.Add(i+5);
+                    indices.Add(i + 5);
                     indices.Add(i);
 
                     i += 6;
@@ -110,7 +147,7 @@
             }
             GridIndexCount = indices.Count;
             GridVertexCount = verts.Count;
-            GridIndexBuffer = new IndexBuffer(gd, IndexElementSize.ThirtyTwoBits, indices.Count, BufferUsage.WriteOnly );
+            GridIndexBuffer = new IndexBuffer(gd, IndexElementSize.ThirtyTwoBits, indices.Count, BufferUsage.WriteOnly);
             GridIndexBuffer.SetData(indices.ToArray());
             GridVertexBuffer = new VertexBuffer(gd, typeof(VertexPositionColor), verts.Count, BufferUsage.WriteOnly);
             GridVertexBuffer.SetData(verts.ToArray());
@@ -131,6 +168,13 @@
             gd.SetVertexBuffer(VertexBuffer);
             gd.Indices = IndexBuffer;
 
+            effect.LightingEnabled = true;
+            effect.DirectionalLight0.Enabled = true;
+            effect.DirectionalLight0.Direction = Vector3.Normalize(new Vector3(1, -1, 0));
+            effect.DirectionalLight0.DiffuseColor = new Vector3(0.8f, 0.8f, 0.8f);
+
+            effect.AmbientLightColor = new Vector3(0.2f, 0.2f, 0.2f);
+
             foreach (var pass in effect.CurrentTechnique.Passes) {
                 pass.Apply();
                 gd.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, TriangleCount);
@@ -140,6 +184,7 @@
         private void DrawGrid(GraphicsDevice gd, BasicEffect effect) {
             gd.SetVertexBuffer(GridVertexBuffer);
             gd.Indices = GridIndexBuffer;
+            effect.LightingEnabled = false;
             foreach (var pass in effect.CurrentTechnique.Passes) {
                 pass.Apply();
                 gd.DrawIndexedPrimitives(PrimitiveType.LineList, 0, 0, GridIndexCount / 2);
@@ -167,10 +212,11 @@
         private Color GetColor(Vector3 v) {
             const float floor = 0.25f;
             const float ceiling = 1.0f;
-            var colorStep = ceiling - floor / MaxHeight;
-            var value = MathHelper.Clamp(floor + v.Y/MaxHeight * colorStep, floor, ceiling);
-            
-            
+            const float median = (floor + ceiling) / 2;
+            var colorStep = ceiling - floor / (MaxHeight * 2);
+            var value = MathHelper.Clamp(median + v.Y / MaxHeight * colorStep, floor, ceiling);
+
+
             return new Color(0, value, 0);
         }
 
@@ -190,5 +236,7 @@
             }
             return ret;
         }
+
+
     }
 }

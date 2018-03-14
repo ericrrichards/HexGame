@@ -8,6 +8,9 @@ namespace HexGame {
         private KeyboardState _currentKeys;
         private KeyboardState _previousKeys;
 
+        private MouseState _currentMouse;
+        private MouseState _previousMouse;
+
         // TODO mouse and gamepad
 
         private GamePadState _currentPad;
@@ -26,6 +29,9 @@ namespace HexGame {
 
             _previousPad = _currentPad;
             _currentPad = GamePad.GetState(PlayerIndex.One);
+
+            _previousMouse = _currentMouse;
+            _currentMouse = Mouse.GetState();
         }
 
         public bool IsDown(string vkey) {
@@ -39,6 +45,14 @@ namespace HexGame {
                 return keys.Any(k => _currentKeys.IsKeyDown(k) && _previousKeys.IsKeyUp(k));
             }
             return false;
+        }
+
+        public bool MouseClicked(bool left) {
+            if (left) {
+                return _currentMouse.LeftButton == ButtonState.Pressed && _previousMouse.LeftButton == ButtonState.Released;
+            } else {
+                return _currentMouse.RightButton == ButtonState.Pressed && _previousMouse.RightButton == ButtonState.Released;
+            }
         }
 
 
