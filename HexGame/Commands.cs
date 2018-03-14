@@ -15,5 +15,6 @@
 
         public const string ToggleHexCoordinates = "ToggleHexCoordinates";
         public const string ToggleHexGrid = "ToggleHexGrid";
+        public const string ToggleWireframe = "ToggleWireframe";
     }
 }

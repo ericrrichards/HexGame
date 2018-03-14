@@ -1,4 +1,5 @@
 ﻿namespace HexGame {
+    using System;
     using System.Collections.Generic;
     using System.Linq;
 
@@ -30,6 +31,7 @@
 
         public bool ShowCoords { get; set; }
         public bool ShowGrid { get; set; }
+        public bool Wireframe { get; set; }
 
         private readonly SpriteFont _font;
 
@@ -68,11 +70,22 @@
             BuildGridBuffers(gd);
         }
 
+        private class Vector3Comparer : IEqualityComparer<Vector3> {
+            public bool Equals(Vector3 x, Vector3 y) {
+                const float tolerance = 0.0001f;
+                return Math.Abs(x.X - y.X) < tolerance && Math.Abs(x.Y - y.Y) < tolerance && Math.Abs(x.Z - y.Z) < tolerance;
+            }
+
+            public int GetHashCode(Vector3 obj) {
+                return obj.GetHashCode();
+            }
+        }
+
         private void BuildHexBuffers(GraphicsDevice gd) {
             Vertices = new List<Vector3>();
             Indices = new List<uint>();
             uint i = 0;
-            var vertToIndex = new Dictionary<Vector3, uint>();
+            var vertToIndex = new Dictionary<Vector3, uint>(new Vector3Comparer());
 
             foreach (var row in Hexes) {
                 foreach (var hexagon in row) {
@@ -89,10 +102,10 @@
                     }
                 }
             }
-
+            
 
             VertexBuffer = new VertexBuffer(gd, typeof(VertexPositionColorNormal), Vertices.Count, BufferUsage.WriteOnly);
-            var vpcs = Vertices.Select(v => new VertexPositionColorNormal(v, GetColor(v), Vector3.Zero)).ToArray();
+            var vpcs = Vertices.Select(v => new VertexPositionColorNormal(v, GetColor(v), Vector3.Up)).ToArray();
             GenerateNormals(vpcs, Indices);
             VertexBuffer.SetData(vpcs);
             IndexBuffer = new IndexBuffer(gd, IndexElementSize.ThirtyTwoBits, Indices.Count, BufferUsage.WriteOnly);
@@ -101,19 +114,20 @@
 
         private void GenerateNormals(VertexPositionColorNormal[] vertices, List<uint> indices) {
             for (var i = 0; i < vertices.Length; i++) {
-                vertices[i].Normal = Vector3.Zero;
+                vertices[i].Normal = Vector3.UnitY;
             }
-            for (int i = 0; i < indices.Count/3; i++) {
-                var v1 = vertices[indices[i * 3 + 1]].Position - vertices[indices[i * 3]].Position;
-                var v2 = vertices[indices[i * 3]].Position - vertices[indices[i * 3 + 2]].Position;
-                var normal = Vector3.Normalize(Vector3.Cross(v1, v2));
+            for (int i = 0; i < TriangleCount; i++) {
+                var v1 = vertices[indices[i * 3]].Position - vertices[indices[i * 3 + 1]].Position;
+                var v2 = vertices[indices[i * 3 + 2]].Position - vertices[indices[i * 3+1]].Position;
+                var normal = Vector3.Cross(v1, v2);
+                normal.Normalize();
                 vertices[indices[i * 3]].Normal += normal;
                 vertices[indices[i * 3 + 1]].Normal += normal;
                 vertices[indices[i * 3 + 2]].Normal += normal;
             }
-            //for (var i = 0; i < vertices.Length; i++) {
-            //    vertices[i].Normal.Normalize();
-            //}
+            for (var i = 0; i < vertices.Length; i++) {
+                vertices[i].Normal.Normalize();
+            }
         }
 
         private void BuildGridBuffers(GraphicsDevice gd) {
@@ -123,7 +137,7 @@
             foreach (var row in Hexes) {
                 foreach (var hex in row) {
                     var borderVerts = hex.Border;
-                    verts.AddRange(borderVerts.Select(v => new VertexPositionColor(v+new Vector3(0,.01f, 0), Color.Red)));
+                    verts.AddRange(borderVerts.Select(v => new VertexPositionColor(v + new Vector3(0, .01f, 0), Color.Red)));
                     indices.Add(i);
                     indices.Add(i + 1);
 
@@ -167,6 +181,11 @@
         private void DrawHexes(GraphicsDevice gd, BasicEffect effect) {
             gd.SetVertexBuffer(VertexBuffer);
             gd.Indices = IndexBuffer;
+            var rs = gd.RasterizerState;
+            if (Wireframe) {
+                gd.RasterizerState = new RasterizerState() { FillMode = FillMode.WireFrame };
+            }
+
 
             effect.LightingEnabled = true;
             effect.DirectionalLight0.Enabled = true;
@@ -179,6 +198,7 @@
                 pass.Apply();
                 gd.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, TriangleCount);
             }
+            gd.RasterizerState = rs;
         }
 
         private void DrawGrid(GraphicsDevice gd, BasicEffect effect) {

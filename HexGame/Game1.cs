@@ -60,7 +60,8 @@ namespace HexGame {
                 [Commands.GameExit] = new List<Keys> { Keys.Escape},
 
                 [Commands.ToggleHexCoordinates] = new List<Keys>{Keys.C},
-                [Commands.ToggleHexGrid] = new List<Keys>{Keys.G}
+                [Commands.ToggleHexGrid] = new List<Keys>{Keys.G},
+                [Commands.ToggleWireframe] = new List<Keys>{Keys.W}
             };
 
             Input.AddBindings(bindings);
@@ -73,7 +74,7 @@ namespace HexGame {
             BasicEffect = new BasicEffect(GraphicsDevice) {
                 VertexColorEnabled = true,
             };
-            ;
+            
 
 
         }
@@ -90,7 +91,7 @@ namespace HexGame {
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
             _font = Content.Load<SpriteFont>("default");
-            Map = new HexMap(GraphicsDevice, 15, 10, _font);
+            Map = new HexMap(GraphicsDevice, 15, 15, _font);
 
             
 
@@ -121,6 +122,9 @@ namespace HexGame {
             }
             if (Input.IsPressed(Commands.ToggleHexGrid)) {
                 Map.ShowGrid = !Map.ShowGrid;
+            }
+            if (Input.IsPressed(Commands.ToggleWireframe)) {
+                Map.Wireframe = !Map.Wireframe;
             }
 
             DisplayText = "Over: ";
