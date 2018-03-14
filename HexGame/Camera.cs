@@ -2,7 +2,7 @@
     using System;
 
     using Microsoft.Xna.Framework;
-
+    using Microsoft.Xna.Framework.Graphics;
 
     public class Camera {
         
@@ -54,7 +54,7 @@
 
             ProjectionMatrix = Matrix.Identity;
             ViewMatrix = Matrix.Identity;
-            WorldMatrix = Matrix.CreateTranslation(0, 0, 0);
+            WorldMatrix = Matrix.Identity;
         }
         public void LookAt(Vector3 pos, Vector3 target, Vector3 up) {
             Target = target;
@@ -105,35 +105,35 @@
         public void Update(GameTime gameTime) {
             var dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
             
-            if (_input.IsPressed(Commands.CameraStrafeLeft)) {
+            if (_input.IsDown(Commands.CameraStrafeLeft)) {
                 Strafe(-dt*CameraSpeed);
             }
-            if (_input.IsPressed(Commands.CameraStrafeRight)) {
+            if (_input.IsDown(Commands.CameraStrafeRight)) {
                 Strafe(dt*CameraSpeed);
             }
-            if (_input.IsPressed(Commands.CameraForward)) {
+            if (_input.IsDown(Commands.CameraForward)) {
                 Walk(-dt*CameraSpeed);
             }
-            if (_input.IsPressed(Commands.CameraBackward)) {
+            if (_input.IsDown(Commands.CameraBackward)) {
                 Walk(dt*CameraSpeed);
             }
 
-            if (_input.IsPressed(Commands.CameraZoomIn)) {
+            if (_input.IsDown(Commands.CameraZoomIn)) {
                 Zoom(-dt * CameraSpeed);
             }
-            if (_input.IsPressed(Commands.CameraZoomOut)) {
+            if (_input.IsDown(Commands.CameraZoomOut)) {
                 Zoom(dt * CameraSpeed);
             }
-            if (_input.IsPressed(Commands.CameraOrbitRight)) {
+            if (_input.IsDown(Commands.CameraOrbitRight)) {
                 Yaw(-dt*CameraSpeed);
             }
-            if (_input.IsPressed(Commands.CameraOrbitLeft)) {
+            if (_input.IsDown(Commands.CameraOrbitLeft)) {
                 Yaw(dt*CameraSpeed);
             }
-            if (_input.IsPressed(Commands.CameraOrbitUp)) {
+            if (_input.IsDown(Commands.CameraOrbitUp)) {
                 Pitch(dt*CameraSpeed);
             }
-            if (_input.IsPressed(Commands.CameraOrbitDown)) {
+            if (_input.IsDown(Commands.CameraOrbitDown)) {
                 Pitch(-dt*CameraSpeed);
             }
 
@@ -157,6 +157,17 @@
         public  void Pitch(float angle) {
             _beta += angle;
             _beta = MathHelper.Clamp(_beta, 0.05f, (float)Math.PI/2.0f - 0.01f);
+        }
+
+
+        public Ray CalculateRay(Vector2 screenPos, Viewport viewport) {
+            var nearPoint = viewport.Unproject(new Vector3(screenPos, 0), ProjectionMatrix, ViewMatrix, WorldMatrix);
+            var farPoint = viewport.Unproject(new Vector3(screenPos, 1.0f), ProjectionMatrix, ViewMatrix, WorldMatrix);
+
+            var direction = farPoint - nearPoint;
+            direction.Normalize();
+
+            return new Ray(nearPoint, direction);
         }
     }
 }

@@ -35,7 +35,8 @@
         public Vector2 MapPos { get; set; }
 
         public Dictionary<HexagonPoint, Vector3> Points { get; }
-
+        public BoundingBox BoundingBox { get; private set; }
+        public List<List<Vector3>> Triangles { get; private set; }
 
         public static Vector3 GetPoint(HexagonPoint p, Vector3 center, float size) {
             var y = HalfHeight(size);
@@ -66,8 +67,18 @@
             Position = position;
 
             Points = PointOrder.ToDictionary(p => p, p => GetPoint(p, Position, Size));
+            BuildBounds();
+        }
 
-
+        private void BuildBounds() {
+            BoundingBox = BoundingBox.CreateFromPoints(Points.Values);
+            Triangles = new List<List<Vector3>>();
+            var indices = IndexOrder.ToList();
+            while (indices.Any()) {
+                var tri = indices.Take(3).Select(i => Points[i]).ToList();
+                Triangles.Add(tri);
+                indices = indices.Skip(3).ToList();
+            }
         }
 
         public static float HalfHeight(float size) {
@@ -85,6 +96,23 @@
 
         public static float Width(float size) {
             return 2 * HalfWidth(size);
+        }
+
+        public float? IntersectedBy(Ray ray) {
+            var d = float.MaxValue;
+            var td = ray.Intersects(BoundingBox);
+            if (td == null ) {
+                return null;
+            }
+            foreach (var tri in Triangles) {         
+                td = ray.Intersects(tri);
+                if (td == null || !(td < d)) {
+                    continue;
+                }
+                d = td.Value;
+                
+            }
+            return d;
         }
 
     }

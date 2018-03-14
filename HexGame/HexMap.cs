@@ -74,5 +74,22 @@
             
             return new Color(0, value, 0);
         }
+
+        public Hexagon PickHex(Ray ray) {
+            var d = float.MaxValue;
+            Hexagon ret = null;
+            foreach (var row in Hexes) {
+                foreach (var hex in row) {
+                    var td = hex.IntersectedBy(ray);
+                    if (td == null || !(td < d)) {
+                        continue;
+                    }
+                    d = td.Value;
+                    ret = hex;
+
+                }
+            }
+            return ret;
+        }
     }
 }

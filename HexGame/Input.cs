@@ -28,7 +28,7 @@ namespace HexGame {
             _currentPad = GamePad.GetState(PlayerIndex.One);
         }
 
-        public bool IsPressed(string vkey) {
+        public bool IsDown(string vkey) {
             if (BindingMap.TryGetValue(vkey, out var keys)) {
                 return keys.Any(k => _currentKeys.IsKeyDown(k));
             }

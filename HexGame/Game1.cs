@@ -23,6 +23,7 @@ namespace HexGame {
         private BasicEffect BasicEffect { get; set; }
 
         private HexMap Map { get; set; }
+        private string DisplayText { get; set; }
 
         public Game1() {
             graphics = new GraphicsDeviceManager(this);
@@ -104,10 +105,26 @@ namespace HexGame {
         protected override void Update(GameTime gameTime) {
             Input.Update();
 
-            if (Input.IsPressed(Commands.GameExit)) {
+            if (Input.IsDown(Commands.GameExit)) {
                 Exit();
             }
-            
+
+            DisplayText = "Over: ";
+
+            var mouse = Mouse.GetState();
+            var mouseLoc = mouse.Position.ToVector2();
+            var viewPort = GraphicsDevice.Viewport;
+            if (viewPort.Bounds.Contains(mouseLoc)) {
+                var ray = Camera.CalculateRay(mouseLoc, viewPort);
+                
+
+                var pickedHex = Map.PickHex(ray);
+                if (pickedHex != null) {
+                    DisplayText = "Over: " + pickedHex.MapPos;
+                }
+            }
+
+
             Camera.Update(gameTime);
 
             // TODO: Add your update logic here
@@ -137,8 +154,16 @@ namespace HexGame {
                 GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, Map.Triangles);
             }
             DrawHexCoords();
+            DrawDebugText();
 
             base.Draw(gameTime);
+        }
+
+        private void DrawDebugText() {
+            spriteBatch.Begin();
+            spriteBatch.DrawString(_font, DisplayText, Vector2.Zero, Color.White);
+
+            spriteBatch.End();
         }
 
         private void DrawHexCoords() {
@@ -152,6 +177,7 @@ namespace HexGame {
                     spriteBatch.DrawString(_font, pos, screen - m / 2, Color.White);
                 }
             }
+
             spriteBatch.End();
         }
     }
