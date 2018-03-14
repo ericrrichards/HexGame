@@ -59,7 +59,8 @@ namespace HexGame {
 
                 [Commands.GameExit] = new List<Keys> { Keys.Escape},
 
-                [Commands.ToggleHexCoordinates] = new List<Keys>{Keys.G}
+                [Commands.ToggleHexCoordinates] = new List<Keys>{Keys.C},
+                [Commands.ToggleHexGrid] = new List<Keys>{Keys.G}
             };
 
             Input.AddBindings(bindings);
@@ -115,6 +116,9 @@ namespace HexGame {
             if (Input.IsPressed(Commands.ToggleHexCoordinates)) {
                 Map.ShowCoords = !Map.ShowCoords;
             }
+            if (Input.IsPressed(Commands.ToggleHexGrid)) {
+                Map.ShowGrid = !Map.ShowGrid;
+            }
 
             DisplayText = "Over: ";
 
@@ -151,7 +155,7 @@ namespace HexGame {
             GraphicsDevice.Clear(Color.Black);
            
             Map.Draw(GraphicsDevice, BasicEffect, spriteBatch, Camera);
-
+            
             DrawDebugText();
 
             base.Draw(gameTime);

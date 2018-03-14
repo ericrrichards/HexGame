@@ -14,5 +14,6 @@
         public const string GameExit = "Game_Exit";
 
         public const string ToggleHexCoordinates = "ToggleHexCoordinates";
+        public const string ToggleHexGrid = "ToggleHexGrid";
     }
 }

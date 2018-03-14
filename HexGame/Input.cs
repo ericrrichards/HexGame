@@ -13,11 +13,11 @@ namespace HexGame {
         private GamePadState _currentPad;
         private GamePadState _previousPad;
 
-        private Dictionary<string, List<Keys>> BindingMap { get; }
+        private Dictionary<string, List<Keys>> KeyBindingMap { get; }
 
 
         public Input() {
-            BindingMap = new Dictionary<string, List<Keys>>();
+            KeyBindingMap = new Dictionary<string, List<Keys>>();
         }
 
         public void Update() {
@@ -29,13 +29,13 @@ namespace HexGame {
         }
 
         public bool IsDown(string vkey) {
-            if (BindingMap.TryGetValue(vkey, out var keys)) {
+            if (KeyBindingMap.TryGetValue(vkey, out var keys)) {
                 return keys.Any(k => _currentKeys.IsKeyDown(k));
             }
             return false;
         }
         public bool IsPressed(string vkey) {
-            if (BindingMap.TryGetValue(vkey, out var keys)) {
+            if (KeyBindingMap.TryGetValue(vkey, out var keys)) {
                 return keys.Any(k => _currentKeys.IsKeyDown(k) && _previousKeys.IsKeyUp(k));
             }
             return false;
@@ -43,7 +43,7 @@ namespace HexGame {
 
 
         public void SetBinding(string vkey, params Keys[] keys) {
-            BindingMap[vkey] = keys.ToList();
+            KeyBindingMap[vkey] = keys.ToList();
         }
 
         public void AddBinding(string vkey, params Keys[] keys) {
@@ -51,15 +51,15 @@ namespace HexGame {
         }
 
         public void AddBinding(string vkey, IEnumerable<Keys> keys) {
-            if (!BindingMap.ContainsKey(vkey)) {
-                BindingMap[vkey] = new List<Keys>();
+            if (!KeyBindingMap.ContainsKey(vkey)) {
+                KeyBindingMap[vkey] = new List<Keys>();
             }
 
-            BindingMap[vkey].AddRange(keys);
+            KeyBindingMap[vkey].AddRange(keys);
         }
 
         public void RemoveBinding(string vkey, Keys key) {
-            if (BindingMap.TryGetValue(vkey, out var keys)) {
+            if (KeyBindingMap.TryGetValue(vkey, out var keys)) {
                 keys.Remove(key);
             }
         }

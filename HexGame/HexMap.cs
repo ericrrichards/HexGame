@@ -22,7 +22,14 @@
         public VertexBuffer VertexBuffer { get; }
         public IndexBuffer IndexBuffer { get; }
 
+        public VertexBuffer GridVertexBuffer { get; private set; }
+        public IndexBuffer GridIndexBuffer { get; private set; }
+        private int GridVertexCount { get; set; }
+        private int GridIndexCount { get; set; }
+
+
         public bool ShowCoords { get; set; }
+        public bool ShowGrid { get; set; }
 
         private readonly SpriteFont _font;
 
@@ -68,9 +75,59 @@
             IndexBuffer = new IndexBuffer(gd, IndexElementSize.ThirtyTwoBits, Indices.Count, BufferUsage.WriteOnly);
             IndexBuffer.SetData(Indices.ToArray());
 
+            BuildGridBuffers(gd);
+
+        }
+
+        private void BuildGridBuffers(GraphicsDevice gd) {
+            var verts = new List<VertexPositionColor>();
+            var indices = new List<uint>();
+            uint i = 0;
+            foreach (var row in Hexes) {
+                foreach (var hex in row) {
+                    var borderVerts = hex.Border;
+                    verts.AddRange(borderVerts.Select(v=>new VertexPositionColor(v, Color.Red)));
+                    indices.Add(i);
+                    indices.Add(i+1);
+
+                    indices.Add(i+1);
+                    indices.Add(i+2);
+
+                    indices.Add(i+2);
+                    indices.Add(i+3);
+
+                    indices.Add(i+3);
+                    indices.Add(i+4);
+
+                    indices.Add(i+4);
+                    indices.Add(i+5);
+
+                    indices.Add(i+5);
+                    indices.Add(i);
+
+                    i += 6;
+                }
+            }
+            GridIndexCount = indices.Count;
+            GridVertexCount = verts.Count;
+            GridIndexBuffer = new IndexBuffer(gd, IndexElementSize.ThirtyTwoBits, indices.Count, BufferUsage.WriteOnly );
+            GridIndexBuffer.SetData(indices.ToArray());
+            GridVertexBuffer = new VertexBuffer(gd, typeof(VertexPositionColor), verts.Count, BufferUsage.WriteOnly);
+            GridVertexBuffer.SetData(verts.ToArray());
         }
 
         public void Draw(GraphicsDevice gd, BasicEffect effect, SpriteBatch spriteBatch, Camera camera) {
+            DrawHexes(gd, effect);
+
+            if (ShowGrid) {
+                DrawGrid(gd, effect);
+            }
+            if (ShowCoords) {
+                DrawHexCoords(spriteBatch, camera);
+            }
+        }
+
+        private void DrawHexes(GraphicsDevice gd, BasicEffect effect) {
             gd.SetVertexBuffer(VertexBuffer);
             gd.Indices = IndexBuffer;
 
@@ -78,10 +135,17 @@
                 pass.Apply();
                 gd.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, TriangleCount);
             }
-            if (ShowCoords) {
-                DrawHexCoords(spriteBatch, camera);
+        }
+
+        private void DrawGrid(GraphicsDevice gd, BasicEffect effect) {
+            gd.SetVertexBuffer(GridVertexBuffer);
+            gd.Indices = GridIndexBuffer;
+            foreach (var pass in effect.CurrentTechnique.Passes) {
+                pass.Apply();
+                gd.DrawIndexedPrimitives(PrimitiveType.LineList, 0, 0, GridIndexCount / 2);
             }
         }
+
         private void DrawHexCoords(SpriteBatch spriteBatch, Camera camera) {
             if (_font == null) {
                 return;
