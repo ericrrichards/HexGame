@@ -37,6 +37,27 @@
         public Dictionary<HexagonPoint, Vector3> Points { get; }
         public BoundingBox BoundingBox { get; private set; }
         public List<List<Vector3>> Triangles { get; private set; }
+        public List<Vector3> Border { get; private set; }
+
+        public Hexagon(Vector3 position, float size = 1.0f) {
+            Size = size;
+            Position = position;
+
+            Points = PointOrder.ToDictionary(p => p, p => GetPoint(p, Position, Size));
+            BuildBounds();
+        }
+
+        private void BuildBounds() {
+            BoundingBox = BoundingBox.CreateFromPoints(Points.Values);
+            Triangles = new List<List<Vector3>>();
+            var indices = IndexOrder.ToList();
+            while (indices.Any()) {
+                var tri = indices.Take(3).Select(i => Points[i]).ToList();
+                Triangles.Add(tri);
+                indices = indices.Skip(3).ToList();
+            }
+            Border = Points.Where(kv => kv.Key != HexagonPoint.Center).Select(kv => kv.Value).ToList();
+        }
 
         public static Vector3 GetPoint(HexagonPoint p, Vector3 center, float size) {
             var y = HalfHeight(size);
@@ -58,26 +79,6 @@
                     return new Vector3(-size, 0, 0) + center;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(p), p, null);
-            }
-        }
-
-
-        public Hexagon(Vector3 position, float size = 1.0f) {
-            Size = size;
-            Position = position;
-
-            Points = PointOrder.ToDictionary(p => p, p => GetPoint(p, Position, Size));
-            BuildBounds();
-        }
-
-        private void BuildBounds() {
-            BoundingBox = BoundingBox.CreateFromPoints(Points.Values);
-            Triangles = new List<List<Vector3>>();
-            var indices = IndexOrder.ToList();
-            while (indices.Any()) {
-                var tri = indices.Take(3).Select(i => Points[i]).ToList();
-                Triangles.Add(tri);
-                indices = indices.Skip(3).ToList();
             }
         }
 

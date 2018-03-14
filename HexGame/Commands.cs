@@ -12,5 +12,7 @@
         public const string CameraOrbitDown = "Camera_OrbitDown";
 
         public const string GameExit = "Game_Exit";
+
+        public const string ToggleHexCoordinates = "ToggleHexCoordinates";
     }
 }

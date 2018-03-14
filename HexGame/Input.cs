@@ -34,6 +34,12 @@ namespace HexGame {
             }
             return false;
         }
+        public bool IsPressed(string vkey) {
+            if (BindingMap.TryGetValue(vkey, out var keys)) {
+                return keys.Any(k => _currentKeys.IsKeyDown(k) && _previousKeys.IsKeyUp(k));
+            }
+            return false;
+        }
 
 
         public void SetBinding(string vkey, params Keys[] keys) {
@@ -63,5 +69,7 @@ namespace HexGame {
                 AddBinding(binding.Key, binding.Value);
             }
         }
+
+        
     }
 }

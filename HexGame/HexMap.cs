@@ -9,7 +9,7 @@
         public int Width { get; }
         public int Height { get; }
         public int Count => Width * Height;
-        public int Triangles => Count * 6;
+        public int TriangleCount => Count * 6;
 
         public float MaxHeight { get; } = 25;
 
@@ -22,7 +22,12 @@
         public VertexBuffer VertexBuffer { get; }
         public IndexBuffer IndexBuffer { get; }
 
-        public HexMap(GraphicsDevice gd, int width, int height) {
+        public bool ShowCoords { get; set; }
+
+        private readonly SpriteFont _font;
+
+        public HexMap(GraphicsDevice gd, int width, int height, SpriteFont font=null) {
+            _font = font;
             HexSize = 0.5f;
             Width = width;
             Height = height;
@@ -63,6 +68,36 @@
             IndexBuffer = new IndexBuffer(gd, IndexElementSize.ThirtyTwoBits, Indices.Count, BufferUsage.WriteOnly);
             IndexBuffer.SetData(Indices.ToArray());
 
+        }
+
+        public void Draw(GraphicsDevice gd, BasicEffect effect, SpriteBatch spriteBatch, Camera camera) {
+            gd.SetVertexBuffer(VertexBuffer);
+            gd.Indices = IndexBuffer;
+
+            foreach (var pass in effect.CurrentTechnique.Passes) {
+                pass.Apply();
+                gd.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, TriangleCount);
+            }
+            if (ShowCoords) {
+                DrawHexCoords(spriteBatch, camera);
+            }
+        }
+        private void DrawHexCoords(SpriteBatch spriteBatch, Camera camera) {
+            if (_font == null) {
+                return;
+            }
+            spriteBatch.Begin();
+            foreach (var row in Hexes) {
+                foreach (var hex in row) {
+                    var projected = spriteBatch.GraphicsDevice.Viewport.Project(hex.Position, camera.ProjectionMatrix, camera.ViewMatrix, camera.WorldMatrix);
+                    var screen = new Vector2(projected.X, projected.Y);
+                    var pos = $"{hex.MapPos.X}, {hex.MapPos.Y}";
+                    var m = _font.MeasureString(pos);
+                    spriteBatch.DrawString(_font, pos, screen - m / 2, Color.White);
+                }
+            }
+
+            spriteBatch.End();
         }
 
         private Color GetColor(Vector3 v) {

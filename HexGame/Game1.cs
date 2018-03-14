@@ -5,6 +5,7 @@ using Microsoft.Xna.Framework.Input;
 namespace HexGame {
     using System;
     using System.Collections.Generic;
+    using System.IO.MemoryMappedFiles;
 
     /// <summary>
     /// This is the main type for your game.
@@ -56,7 +57,9 @@ namespace HexGame {
                 [Commands.CameraOrbitDown] = new List<Keys>{Keys.OemQuestion},
                 [Commands.CameraOrbitUp] = new List<Keys>{Keys.OemQuotes},
 
-                [Commands.GameExit] = new List<Keys> { Keys.Escape}
+                [Commands.GameExit] = new List<Keys> { Keys.Escape},
+
+                [Commands.ToggleHexCoordinates] = new List<Keys>{Keys.G}
             };
 
             Input.AddBindings(bindings);
@@ -70,7 +73,7 @@ namespace HexGame {
                 VertexColorEnabled = true,
             };
 
-            Map = new HexMap(GraphicsDevice, 15, 10);
+            
 
         }
         
@@ -86,6 +89,7 @@ namespace HexGame {
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
             _font = Content.Load<SpriteFont>("default");
+            Map = new HexMap(GraphicsDevice, 15, 10, _font);
             // TODO: use this.Content to load your game content here
         }
 
@@ -107,6 +111,9 @@ namespace HexGame {
 
             if (Input.IsDown(Commands.GameExit)) {
                 Exit();
+            }
+            if (Input.IsPressed(Commands.ToggleHexCoordinates)) {
+                Map.ShowCoords = !Map.ShowCoords;
             }
 
             DisplayText = "Over: ";
@@ -140,20 +147,11 @@ namespace HexGame {
 
             BasicEffect.Projection = Camera.ProjectionMatrix;
             BasicEffect.View = Camera.ViewMatrix;
-            //BasicEffect.World = Camera.WorldMatrix;
 
             GraphicsDevice.Clear(Color.Black);
            
-            GraphicsDevice.SetVertexBuffer(Map.VertexBuffer);
-            GraphicsDevice.Indices = Map.IndexBuffer;
+            Map.Draw(GraphicsDevice, BasicEffect, spriteBatch, Camera);
 
-            //GraphicsDevice.RasterizerState = RasterizerState.CullNone;
-
-            foreach (var pass in BasicEffect.CurrentTechnique.Passes) {
-                pass.Apply();
-                GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, Map.Triangles);
-            }
-            DrawHexCoords();
             DrawDebugText();
 
             base.Draw(gameTime);
@@ -162,21 +160,6 @@ namespace HexGame {
         private void DrawDebugText() {
             spriteBatch.Begin();
             spriteBatch.DrawString(_font, DisplayText, Vector2.Zero, Color.White);
-
-            spriteBatch.End();
-        }
-
-        private void DrawHexCoords() {
-            spriteBatch.Begin();
-            foreach (var row in Map.Hexes) {
-                foreach (var hex in row) {
-                    var projected = GraphicsDevice.Viewport.Project(hex.Position, Camera.ProjectionMatrix, Camera.ViewMatrix, Camera.WorldMatrix);
-                    var screen = new Vector2(projected.X, projected.Y);
-                    var pos = $"{hex.MapPos.X}, {hex.MapPos.Y}";
-                    var m = _font.MeasureString(pos);
-                    spriteBatch.DrawString(_font, pos, screen - m / 2, Color.White);
-                }
-            }
 
             spriteBatch.End();
         }
