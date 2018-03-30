@@ -1,5 +1,4 @@
 ﻿namespace HexGame {
-    using System;
     using System.Collections.Generic;
     using System.Linq;
 
@@ -23,10 +22,7 @@
         public VertexBuffer VertexBuffer { get; set; }
         public IndexBuffer IndexBuffer { get; set; }
 
-        public VertexBuffer GridVertexBuffer { get; private set; }
-        public IndexBuffer GridIndexBuffer { get; private set; }
-        private int GridVertexCount { get; set; }
-        private int GridIndexCount { get; set; }
+        private HexGrid HexGrid { get; set; }
 
 
         public bool ShowCoords { get; set; }
@@ -62,25 +58,16 @@
 
             BuildHexBuffers(gd);
 
-            BuildGridBuffers(gd);
+            HexGrid = new HexGrid(gd, Hexes, Color.Red);
 
         }
         public void Rebuild(GraphicsDevice gd) {
             BuildHexBuffers(gd);
 
-            BuildGridBuffers(gd);
+            HexGrid = new HexGrid(gd, Hexes, Color.Red);
         }
 
-        private class Vector3Comparer : IEqualityComparer<Vector3> {
-            public bool Equals(Vector3 x, Vector3 y) {
-                const float tolerance = 0.0001f;
-                return Math.Abs(x.X - y.X) < tolerance && Math.Abs(x.Y - y.Y) < tolerance && Math.Abs(x.Z - y.Z) < tolerance;
-            }
-
-            public int GetHashCode(Vector3 obj) {
-                return obj.GetHashCode();
-            }
-        }
+        
 
         private void BuildHexBuffers(GraphicsDevice gd) {
             Vertices = new List<Vector3>();
@@ -118,7 +105,7 @@
             for (var i = 0; i < vertices.Length; i++) {
                 vertices[i].Normal = Vector3.UnitY;
             }
-            for (int i = 0; i < TriangleCount; i++) {
+            for (var i = 0; i < TriangleCount; i++) {
                 var v1 = vertices[indices[i * 3]].Position - vertices[indices[i * 3 + 1]].Position;
                 var v2 = vertices[indices[i * 3 + 2]].Position - vertices[indices[i * 3+1]].Position;
                 var normal = Vector3.Cross(v1, v2);
@@ -132,47 +119,13 @@
             }
         }
 
-        private void BuildGridBuffers(GraphicsDevice gd) {
-            var verts = new List<VertexPositionColor>();
-            var indices = new List<uint>();
-            uint i = 0;
-            foreach (var hex in Hexes) {
-                var borderVerts = hex.Border;
-                verts.AddRange(borderVerts.Select(v => new VertexPositionColor(v + new Vector3(0, .01f, 0), Color.Red)));
-                indices.Add(i);
-                indices.Add(i + 1);
-
-                indices.Add(i + 1);
-                indices.Add(i + 2);
-
-                indices.Add(i + 2);
-                indices.Add(i + 3);
-
-                indices.Add(i + 3);
-                indices.Add(i + 4);
-
-                indices.Add(i + 4);
-                indices.Add(i + 5);
-
-                indices.Add(i + 5);
-                indices.Add(i);
-
-                i += 6;
-            }
-            
-            GridIndexCount = indices.Count;
-            GridVertexCount = verts.Count;
-            GridIndexBuffer = new IndexBuffer(gd, IndexElementSize.ThirtyTwoBits, indices.Count, BufferUsage.WriteOnly);
-            GridIndexBuffer.SetData(indices.ToArray());
-            GridVertexBuffer = new VertexBuffer(gd, typeof(VertexPositionColor), verts.Count, BufferUsage.WriteOnly);
-            GridVertexBuffer.SetData(verts.ToArray());
-        }
+        
 
         public void Draw(GraphicsDevice gd, BasicEffect effect, SpriteBatch spriteBatch, Camera camera) {
             DrawHexes(gd, effect);
 
             if (ShowGrid) {
-                DrawGrid(gd, effect);
+                HexGrid.DrawGrid(gd, effect);
             }
             if (ShowCoords) {
                 DrawHexCoords(spriteBatch, camera);
@@ -202,15 +155,7 @@
             gd.RasterizerState = rs;
         }
 
-        private void DrawGrid(GraphicsDevice gd, BasicEffect effect) {
-            gd.SetVertexBuffer(GridVertexBuffer);
-            gd.Indices = GridIndexBuffer;
-            effect.LightingEnabled = false;
-            foreach (var pass in effect.CurrentTechnique.Passes) {
-                pass.Apply();
-                gd.DrawIndexedPrimitives(PrimitiveType.LineList, 0, 0, GridIndexCount / 2);
-            }
-        }
+        
 
         private void DrawHexCoords(SpriteBatch spriteBatch, Camera camera) {
             if (_font == null) {
