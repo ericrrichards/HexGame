@@ -15,8 +15,8 @@
         public List<Hexagon> Hexes { get; }
 
         
-        private HexMapMeshFlat Mesh { get; set; }
-        //private HexMapMesh Mesh { get; set; }
+        //private HexMapMeshFlat Mesh { get; set; }
+        private HexMapMesh Mesh { get; set; }
         private HexGrid HexGrid { get; set; }
 
 
@@ -55,8 +55,8 @@
 
         }
         public void Rebuild(GraphicsDevice gd) {
-            //Mesh = new HexMapMesh(gd, Hexes);
-            Mesh = new HexMapMeshFlat(gd, Hexes);
+            Mesh = new HexMapMesh(gd, Hexes);
+            //Mesh = new HexMapMeshFlat(gd, Hexes);
 
             HexGrid = new HexGrid(gd, Hexes, Color.Red);
         }

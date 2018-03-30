@@ -28,16 +28,14 @@
             uint i = 0;
             
             foreach (var hexagon in hexes) {
-                foreach (var c in HexMetrics.PointOrder) {
-                    var p = hexagon.Points[c];
-                    Vertices.Add(p);
+                foreach (var tri in hexagon.Triangles) {
+                    Vertices.Add(tri.P0);
+                    Indices.Add(i++);
+                    Vertices.Add(tri.P1);
+                    Indices.Add(i++);
+                    Vertices.Add(tri.P2);
+                    Indices.Add(i++);
                 }
-
-                for (var i2 = 0; i2 < HexMetrics.IndexOrder.Count; i2++) {
-                    var p = HexMetrics.IndexOrder[i2];
-                    Indices.Add(i+(uint)p);
-                }
-                i += (uint)HexMetrics.PointOrder.Count;
             }
             
             BoundingBox = BoundingBox.CreateFromPoints(Vertices);
@@ -58,6 +56,7 @@
                 var v1 = vertices[indices[i]].Position - vertices[indices[i + 1]].Position;
                 var v2 = vertices[indices[i + 2]].Position - vertices[indices[i +1]].Position;
                 var normal = Vector3.Cross(v1, v2);
+
                 normal.Normalize();
                 vertices[indices[i]].Normal = normal;
                 vertices[indices[i + 1]].Normal = normal;
@@ -88,9 +87,9 @@
             effect.LightingEnabled = true;
             
             effect.DirectionalLight0.Enabled = true;
-            effect.DirectionalLight0.Direction = Vector3.Normalize(new Vector3(1, -1, 0));
+            effect.DirectionalLight0.Direction = Vector3.Normalize(new Vector3(0, -1, 1));
             effect.DirectionalLight0.DiffuseColor = new Vector3(0.7f, 0.7f, 0.7f);
-            effect.DirectionalLight0.SpecularColor = new Vector3(.1f,.1f,.1f);
+            //effect.DirectionalLight0.SpecularColor = new Vector3(.1f,.1f,.1f);
 
             effect.AmbientLightColor = new Vector3(0.3f, 0.3f, 0.3f);
 

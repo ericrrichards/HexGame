@@ -30,11 +30,18 @@
 
             
             foreach (var hexagon in hexes) {
-                foreach (var c in HexMetrics.PointOrder) {
-                    var p = hexagon.Points[c];
-                    if (!vertToIndex.ContainsKey(p)) {
-                        vertToIndex[p] = i++;
-                        Vertices.Add(p);
+                foreach (var tri in hexagon.Triangles) {
+                    if (!vertToIndex.ContainsKey(tri.P0)) {
+                        vertToIndex[tri.P0] = i++;
+                        Vertices.Add(tri.P0);
+                    }
+                    if (!vertToIndex.ContainsKey(tri.P1)) {
+                        vertToIndex[tri.P1] = i++;
+                        Vertices.Add(tri.P1);
+                    }
+                    if (!vertToIndex.ContainsKey(tri.P2)) {
+                        vertToIndex[tri.P2] = i++;
+                        Vertices.Add(tri.P2);
                     }
                 }
                 foreach (var c in HexMetrics.IndexOrder) {
