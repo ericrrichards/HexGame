@@ -48,12 +48,15 @@
     <Compile Include="Commands.cs" />
     <Compile Include="Game1.cs" />
     <Compile Include="Hexagon.cs" />
+    <Compile Include="HexagonPoint.cs" />
     <Compile Include="HexGrid.cs" />
     <Compile Include="HexMap.cs" />
+    <Compile Include="HexMetrics.cs" />
     <Compile Include="Input.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RayExtensions.cs" />
+    <Compile Include="Triangle.cs" />
     <Compile Include="Vector3Comparer.cs" />
     <Compile Include="VertexPositionColorNormal.cs" />
   </ItemGroup>

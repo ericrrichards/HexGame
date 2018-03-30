@@ -40,7 +40,7 @@
             Height = height;
             Hexes = new List<Hexagon>();
 
-            var hexHeight = Hexagon.Height(HexSize);
+            var hexHeight = HexMetrics.Height(HexSize);
             for (var x = 0; x < Width; x++) {
                 for (var y = 0; y < Height; y++) {
                     var position = Vector3.Zero;
