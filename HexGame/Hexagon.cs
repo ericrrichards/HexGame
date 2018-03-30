@@ -116,10 +116,10 @@
             return d;
         }
 
-        public void Raise(float dy) {
-            var center=  Points[HexagonPoint.Center];
+        public void Raise(float dy, HexagonPoint p=HexagonPoint.Center) {
+            var center=  Points[p];
             center.Y += dy;
-            Points[HexagonPoint.Center] = center;
+            Points[p] = center;
             BuildBounds();
         }
     }

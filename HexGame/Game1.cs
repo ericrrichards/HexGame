@@ -5,7 +5,11 @@ using Microsoft.Xna.Framework.Input;
 namespace HexGame {
     using System;
     using System.Collections.Generic;
-    using System.IO.MemoryMappedFiles;
+
+    public enum PickMode {
+        HexCenter,
+        Vertex
+    }
 
     /// <summary>
     /// This is the main type for your game.
@@ -25,6 +29,8 @@ namespace HexGame {
 
         private HexMap Map { get; set; }
         private string DisplayText { get; set; }
+
+        private PickMode pickMode = PickMode.HexCenter; 
 
         public Game1() {
             graphics = new GraphicsDeviceManager(this);
@@ -52,16 +58,17 @@ namespace HexGame {
                 [Commands.CameraBackward] = new List<Keys> { Keys.Down},
                 [Commands.CameraZoomIn] = new List<Keys> { Keys.OemPlus, Keys.Add},
                 [Commands.CameraZoomOut] = new List<Keys> { Keys.OemMinus, Keys.Subtract},
-                [Commands.CameraOrbitRight] = new List<Keys>{Keys.OemPeriod},
-                [Commands.CameraOrbitLeft] = new List<Keys>{Keys.OemComma},
-                [Commands.CameraOrbitDown] = new List<Keys>{Keys.OemQuestion},
-                [Commands.CameraOrbitUp] = new List<Keys>{Keys.OemQuotes},
+                [Commands.CameraOrbitRight] = new List<Keys>{Keys.PageDown},
+                [Commands.CameraOrbitLeft] = new List<Keys>{Keys.Delete},
+                [Commands.CameraOrbitDown] = new List<Keys>{Keys.End},
+                [Commands.CameraOrbitUp] = new List<Keys>{Keys.Home},
 
                 [Commands.GameExit] = new List<Keys> { Keys.Escape},
 
                 [Commands.ToggleHexCoordinates] = new List<Keys>{Keys.C},
                 [Commands.ToggleHexGrid] = new List<Keys>{Keys.G},
-                [Commands.ToggleWireframe] = new List<Keys>{Keys.W}
+                [Commands.ToggleWireframe] = new List<Keys>{Keys.W},
+                [Commands.TogglePickMode] = new List<Keys>{Keys.P}
             };
 
             Input.AddBindings(bindings);
@@ -126,6 +133,13 @@ namespace HexGame {
             if (Input.IsPressed(Commands.ToggleWireframe)) {
                 Map.Wireframe = !Map.Wireframe;
             }
+            if (Input.IsPressed(Commands.TogglePickMode)) {
+                if (pickMode == PickMode.HexCenter) {
+                    pickMode = PickMode.Vertex;
+                } else if (pickMode == PickMode.Vertex) {
+                    pickMode = PickMode.HexCenter;
+                }
+            }
 
             DisplayText = "Over: ";
 
@@ -134,24 +148,41 @@ namespace HexGame {
             var viewPort = GraphicsDevice.Viewport;
             if (viewPort.Bounds.Contains(mouseLoc)) {
                 var ray = Camera.CalculateRay(mouseLoc, viewPort);
-                
 
-                var pickedHex = Map.PickHex(ray);
-                if (pickedHex != null) {
-                    DisplayText = "Over: " + pickedHex.MapPos;
-                    var mapDirty = false;
-                    if (Input.MouseClicked(true)) {
-                        pickedHex.Raise(0.25f);
-                        mapDirty = true;
-                    } else if (Input.MouseClicked(false)) {
-                        pickedHex.Raise(-0.25f);
-                        mapDirty = true;
+                if (pickMode == PickMode.HexCenter) {
+                    var pickedHex = Map.PickHex(ray);
+                    if (pickedHex != null) {
+                        DisplayText = "Over: " + pickedHex.MapPos;
+                        var mapDirty = false;
+                        if (Input.MouseClicked(true)) {
+                            pickedHex.Raise(0.25f);
+                            mapDirty = true;
+                        } else if (Input.MouseClicked(false)) {
+                            pickedHex.Raise(-0.25f);
+                            mapDirty = true;
+                        }
+                        if (mapDirty) {
+                            Map.Rebuild(GraphicsDevice);
+                        }
                     }
-                    if (mapDirty) {
-                        Map.Rebuild(GraphicsDevice);
+                } else if (pickMode == PickMode.Vertex) {
+                    var vertex = Map.PickVertex(ray);
+                    if (vertex != null) {
+                        DisplayText = "Over: " + vertex;
+                        var mapDirty = false;
+                        if (Input.MouseClicked(true)) {
+                            Map.RaiseVertex(vertex.Value, 0.25f);
+                            mapDirty = true;
+                        } else if (Input.MouseClicked(false)) {
+                            Map.RaiseVertex(vertex.Value, -0.25f);
+                            mapDirty = true;
+                        }
+                        if (mapDirty) {
+                            Map.Rebuild(GraphicsDevice);
+                        }
                     }
                 }
-                
+
             }
 
 
