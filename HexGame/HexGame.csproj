@@ -51,6 +51,8 @@
     <Compile Include="HexagonPoint.cs" />
     <Compile Include="HexGrid.cs" />
     <Compile Include="HexMap.cs" />
+    <Compile Include="HexMapMesh.cs" />
+    <Compile Include="HexMapMeshFlat.cs" />
     <Compile Include="HexMetrics.cs" />
     <Compile Include="Input.cs" />
     <Compile Include="Program.cs" />

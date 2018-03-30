@@ -6,19 +6,6 @@
     using Microsoft.Xna.Framework;
 
     public class Hexagon {
-        public static readonly IReadOnlyList<HexagonPoint> PointOrder = new ReadOnlyCollection<HexagonPoint>(new List<HexagonPoint> {
-            HexagonPoint.Center, HexagonPoint.TopLeft, HexagonPoint.TopRight, HexagonPoint.Right, 
-            HexagonPoint.BottomRight, HexagonPoint.BottomLeft, HexagonPoint.Left
-        });
-        public static readonly IReadOnlyList<HexagonPoint> IndexOrder = new ReadOnlyCollection<HexagonPoint>(new List<HexagonPoint> {
-            HexagonPoint.Center, HexagonPoint.TopLeft, HexagonPoint.TopRight,
-            HexagonPoint.Center, HexagonPoint.TopRight, HexagonPoint.Right,
-            HexagonPoint.Center, HexagonPoint.Right, HexagonPoint.BottomRight,
-            HexagonPoint.Center, HexagonPoint.BottomRight, HexagonPoint.BottomLeft,
-            HexagonPoint.Center, HexagonPoint.BottomLeft, HexagonPoint.Left,
-            HexagonPoint.Center, HexagonPoint.Left, HexagonPoint.TopLeft
-        });
-
         public float HexWidth { get; }
         public Vector3 Position { get; }
         public Vector2 MapPos { get; set; }
@@ -32,14 +19,14 @@
             HexWidth = hexWidth;
             Position = position;
 
-            Points = PointOrder.ToDictionary(p => p, p => HexMetrics.GetPoint(p, Position, HexWidth));
+            Points = HexMetrics.PointOrder.ToDictionary(p => p, p => HexMetrics.GetPoint(p, Position, HexWidth));
             BuildBounds();
         }
 
         private void BuildBounds() {
             BoundingBox = BoundingBox.CreateFromPoints(Points.Values);
             Triangles = new List<Triangle>();
-            var indices = IndexOrder.ToList();
+            var indices = HexMetrics.IndexOrder.ToList();
             while (indices.Any()) {
                 var tri = indices.Take(3).Select(i => Points[i]).ToList();
                 Triangles.Add(new Triangle(tri));
