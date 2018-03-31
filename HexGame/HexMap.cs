@@ -1,9 +1,15 @@
 ﻿namespace HexGame {
+    using System;
     using System.Collections.Generic;
     using System.Linq;
 
     using Microsoft.Xna.Framework;
     using Microsoft.Xna.Framework.Graphics;
+
+    public enum MeshType {
+        Smooth,
+        Flat
+    }
 
     public class HexMap {
         public int Width { get; }
@@ -15,7 +21,7 @@
         public List<Hexagon> Hexes { get; }
 
         
-        //private HexMapMeshFlat Mesh { get; set; }
+        
         private HexMapMesh Mesh { get; set; }
         private HexGrid HexGrid { get; set; }
 
@@ -23,17 +29,19 @@
         public bool ShowCoords { get; set; }
         public bool ShowGrid { get; set; }
         public bool Wireframe { get; set; }
+        public MeshType MeshType { get; }
 
         private readonly SpriteFont _font;
 
         
 
-        public HexMap(GraphicsDevice gd, int width, int height, SpriteFont font = null) {
+        public HexMap(GraphicsDevice gd, int width, int height, SpriteFont font = null, MeshType meshType=MeshType.Smooth) {
             _font = font;
             HexSize = 0.5f;
             Width = width;
             Height = height;
             Hexes = new List<Hexagon>();
+            MeshType = meshType;
 
             var hexHeight = HexMetrics.Height(HexSize);
             for (var x = 0; x < Width; x++) {
@@ -55,9 +63,16 @@
 
         }
         public void Rebuild(GraphicsDevice gd) {
-            Mesh = new HexMapMesh(gd, Hexes);
-            //Mesh = new HexMapMeshFlat(gd, Hexes);
-
+            switch (MeshType) {
+                case MeshType.Smooth:
+                    Mesh = new HexMapMeshSmooth(gd, Hexes);
+                    break;
+                case MeshType.Flat:
+                    Mesh = new HexMapMeshFlat(gd, Hexes);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
             HexGrid = new HexGrid(gd, Hexes, Color.Red);
         }
 
