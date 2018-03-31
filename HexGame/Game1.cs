@@ -155,10 +155,10 @@ namespace HexGame {
                         DisplayText = "Over: " + pickedHex.MapPos;
                         var mapDirty = false;
                         if (Input.MouseClicked(true)) {
-                            pickedHex.Raise(0.25f);
+                            Map.RaiseHex(pickedHex, 0.25f);
                             mapDirty = true;
                         } else if (Input.MouseClicked(false)) {
-                            pickedHex.Raise(-0.25f);
+                            Map.RaiseHex(pickedHex, -0.25f);
                             mapDirty = true;
                         }
                         if (mapDirty) {

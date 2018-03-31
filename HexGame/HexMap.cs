@@ -3,6 +3,8 @@
     using System.Collections.Generic;
     using System.Linq;
 
+    using JetBrains.Annotations;
+
     using Microsoft.Xna.Framework;
     using Microsoft.Xna.Framework.Graphics;
 
@@ -46,6 +48,7 @@
             var hexHeight = HexMetrics.Height(HexSize);
             for (var x = 0; x < Width; x++) {
                 for (var y = 0; y < Height; y++) {
+                    //TODO bump this out into a helper function
                     var position = Vector3.Zero;
                     position.X += 1.5f * HexSize * x;
                     position.Z += hexHeight * y;
@@ -53,10 +56,16 @@
                         position.Z += hexHeight / 2;
                     }
                     var hexagon = new Hexagon(position, HexSize) {
-                        MapPos = new Vector2(x, y)
+                        MapPos = new Point(x, y)
                     };
                     Hexes.Add(hexagon);
                 }
+            }
+            foreach (var hexagon in Hexes) {
+                foreach (HexDirection dir in Enum.GetValues(typeof(HexDirection))) {
+                    hexagon.Neighbors[dir] = GetHex(HexMetrics.GetNeighborCoords(hexagon.MapPos, dir));
+                }
+                
             }
 
             Rebuild(gd);
@@ -73,10 +82,19 @@
                 default:
                     throw new ArgumentOutOfRangeException();
             }
-            HexGrid = new HexGrid(gd, Hexes, Color.Red);
+            HexGrid = new HexGrid(gd, Hexes, Color.Gray);
         }
-
-        
+        [CanBeNull]
+        public Hexagon GetHex(Point p) {
+            return GetHex(p.X, p.Y);
+        }
+        [CanBeNull]
+        public Hexagon GetHex(int x, int y) {
+            if (x < 0 || x >= Width || y < 0 || y >= Height) {
+                return null;
+            }
+            return Hexes[y + x * Width];
+        }
 
         public void Draw(GraphicsDevice gd, BasicEffect effect, SpriteBatch spriteBatch, Camera camera) {
             Mesh.DrawHexes(gd, effect, Wireframe);
@@ -145,6 +163,18 @@
             foreach (var affectedHex in affectedHexes) {
                 affectedHex.hex.Raise(dy, affectedHex.point);
             }
+        }
+
+        public void RaiseHex(Hexagon hex, float dy) {
+            var comparer = new Vector3Comparer();
+            
+
+            var neighbors = hex.Neighbors.Values.Where(n=>n!=null).ToList();
+            foreach (var neighbor in neighbors) {
+                var pointsToRaise = hex.GetMatchingPoints(neighbor);
+                neighbor.Raise(dy, pointsToRaise);
+            }
+            hex.Raise(dy, HexMetrics.PointOrder);
         }
     }
 }
