@@ -1,4 +1,5 @@
 ﻿namespace HexGame {
+    using System;
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
     using System.Diagnostics;
@@ -72,6 +73,21 @@
             }
             BuildBounds();
         }
+
+        public bool CanRaisePoint(HexagonPoint p, float dy) {
+            var v = Points[p];
+            var newHeight = v.Y + dy;
+            var triangles = Triangles.Where(t => t.Points.Any(tp => tp == v));
+
+            foreach (var triangle in triangles) {
+                var otherPoints = triangle.Points.Except(new[] { v });
+                if (otherPoints.Any(otherPoint => Math.Abs(newHeight - otherPoint.Y) > Math.Abs(dy))) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
 
         public List<HexagonPoint> GetMatchingPoints(Hexagon neighbor) {
             var comparer = new Vector3Comparer();

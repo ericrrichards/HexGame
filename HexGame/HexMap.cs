@@ -155,12 +155,17 @@
         }
         
         private void RaiseVertex(Vector3 vertex, float dy) {
+            // TODO limit raising vertices to only allow one height step above/below surrounding vertices
+
             var comparer = new Vector3Comparer();
             var affectedHexes = Hexes.Where(h => h.Points.Values.Any(v => comparer.Equals(v, vertex)))
                                      .Select(h => new {
                                          hex = h, 
                                          point = h.Points.First(p=>comparer.Equals(p.Value, vertex)).Key
-                                      });
+                                      }).ToList();
+            if (!affectedHexes.All(h => h.hex.CanRaisePoint(h.point, dy))) {
+                return;
+            }
             foreach (var affectedHex in affectedHexes) {
                 affectedHex.hex.Raise(dy, affectedHex.point);
             }
