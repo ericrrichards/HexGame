@@ -155,8 +155,6 @@
         }
         
         private void RaiseVertex(Vector3 vertex, float dy) {
-            // TODO limit raising vertices to only allow one height step above/below surrounding vertices
-
             var comparer = new Vector3Comparer();
             var affectedHexes = Hexes.Where(h => h.Points.Values.Any(v => comparer.Equals(v, vertex)))
                                      .Select(h => new {
@@ -179,21 +177,5 @@
             RaiseVertex(vertex, -HeightStep);
         }
 
-        private void RaiseHex(Hexagon hex, float dy) {
-            var neighbors = hex.Neighbors.Values.Where(n=>n!=null).ToList();
-            foreach (var neighbor in neighbors) {
-                var pointsToRaise = hex.GetMatchingPoints(neighbor);
-                neighbor.Raise(dy, pointsToRaise);
-            }
-            hex.Raise(dy, HexMetrics.PointOrder);
-        }
-
-        public void RaiseHex(Hexagon hex) {
-            RaiseHex(hex, HeightStep);
-        }
-
-        public void LowerHex(Hexagon hex) {
-            RaiseHex(hex, -HeightStep);
-        }
     }
 }

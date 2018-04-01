@@ -57,6 +57,13 @@ namespace HexGame {
                 return _currentMouse.RightButton == ButtonState.Pressed && _previousMouse.RightButton == ButtonState.Released;
             }
         }
+        public bool MouseDown(bool left) {
+            if (left) {
+                return _currentMouse.LeftButton == ButtonState.Pressed;
+            } else {
+                return _currentMouse.RightButton == ButtonState.Pressed;
+            }
+        }
 
         public int MouseScrolled() {
             return _previousMouse.ScrollWheelValue - _currentMouse.ScrollWheelValue;

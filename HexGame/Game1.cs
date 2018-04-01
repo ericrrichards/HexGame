@@ -6,10 +6,6 @@ namespace HexGame {
     using System;
     using System.Collections.Generic;
 
-    public enum PickMode {
-        HexCenter,
-        Vertex
-    }
 
     /// <summary>
     /// This is the main type for your game.
@@ -29,8 +25,6 @@ namespace HexGame {
 
         private HexMap Map { get; set; }
         private string DisplayText { get; set; }
-
-        private PickMode pickMode = PickMode.HexCenter; 
 
         public Game1() {
             graphics = new GraphicsDeviceManager(this);
@@ -52,43 +46,43 @@ namespace HexGame {
             Input = new Input();
 
             var bindings = new Dictionary<string, List<Keys>> {
-                [Commands.CameraStrafeLeft] = new List<Keys>{Keys.Left},
-                [Commands.CameraStrafeRight] = new List<Keys> { Keys.Right},
-                [Commands.CameraForward] = new List<Keys> { Keys.Up},
-                [Commands.CameraBackward] = new List<Keys> { Keys.Down},
-                [Commands.CameraZoomIn] = new List<Keys> { Keys.OemPlus, Keys.Add},
-                [Commands.CameraZoomOut] = new List<Keys> { Keys.OemMinus, Keys.Subtract},
-                [Commands.CameraOrbitRight] = new List<Keys>{Keys.PageDown},
-                [Commands.CameraOrbitLeft] = new List<Keys>{Keys.Delete},
-                [Commands.CameraOrbitDown] = new List<Keys>{Keys.End},
-                [Commands.CameraOrbitUp] = new List<Keys>{Keys.Home},
+                [Commands.CameraStrafeLeft] = new List<Keys> { Keys.Left },
+                [Commands.CameraStrafeRight] = new List<Keys> { Keys.Right },
+                [Commands.CameraForward] = new List<Keys> { Keys.Up },
+                [Commands.CameraBackward] = new List<Keys> { Keys.Down },
+                [Commands.CameraZoomIn] = new List<Keys> { Keys.OemPlus, Keys.Add },
+                [Commands.CameraZoomOut] = new List<Keys> { Keys.OemMinus, Keys.Subtract },
+                [Commands.CameraOrbitRight] = new List<Keys> { Keys.PageDown },
+                [Commands.CameraOrbitLeft] = new List<Keys> { Keys.Delete },
+                [Commands.CameraOrbitDown] = new List<Keys> { Keys.End },
+                [Commands.CameraOrbitUp] = new List<Keys> { Keys.Home },
 
-                [Commands.GameExit] = new List<Keys> { Keys.Escape},
+                [Commands.GameExit] = new List<Keys> { Keys.Escape },
 
-                [Commands.ToggleHexCoordinates] = new List<Keys>{Keys.C},
-                [Commands.ToggleHexGrid] = new List<Keys>{Keys.G},
-                [Commands.ToggleWireframe] = new List<Keys>{Keys.W},
-                [Commands.TogglePickMode] = new List<Keys>{Keys.P}
+                [Commands.ToggleHexCoordinates] = new List<Keys> { Keys.C },
+                [Commands.ToggleHexGrid] = new List<Keys> { Keys.G },
+                [Commands.ToggleWireframe] = new List<Keys> { Keys.W },
+                [Commands.TogglePickMode] = new List<Keys> { Keys.P }
             };
 
             Input.AddBindings(bindings);
 
 
-            Camera = new Camera( Input);
+            Camera = new Camera(Input);
             Camera.SetLens(MathHelper.ToRadians(45), GraphicsDevice.DisplayMode.AspectRatio, .01f, 1000f);
-            Camera.LookAt(new Vector3(0, 10, 1), Vector3.Zero, Vector3.Up );
+            Camera.LookAt(new Vector3(0, 10, 1), Vector3.Zero, Vector3.Up);
 
             BasicEffect = new BasicEffect(GraphicsDevice) {
                 VertexColorEnabled = true,
             };
-            
+
 
 
         }
-        
 
 
-        
+
+
 
         /// <summary>
         /// LoadContent will be called once per game and is the place to load
@@ -100,7 +94,7 @@ namespace HexGame {
             _font = Content.Load<SpriteFont>("default");
             Map = new HexMap(GraphicsDevice, 15, 15, _font, MeshType.Flat);
 
-            
+
 
             // TODO: use this.Content to load your game content here
         }
@@ -133,13 +127,6 @@ namespace HexGame {
             if (Input.IsPressed(Commands.ToggleWireframe)) {
                 Map.Wireframe = !Map.Wireframe;
             }
-            if (Input.IsPressed(Commands.TogglePickMode)) {
-                if (pickMode == PickMode.HexCenter) {
-                    pickMode = PickMode.Vertex;
-                } else if (pickMode == PickMode.Vertex) {
-                    pickMode = PickMode.HexCenter;
-                }
-            }
 
             DisplayText = "Over: ";
 
@@ -148,40 +135,22 @@ namespace HexGame {
             var viewPort = GraphicsDevice.Viewport;
             if (viewPort.Bounds.Contains(mouseLoc)) {
                 var ray = Camera.CalculateRay(mouseLoc, viewPort);
-
-                if (pickMode == PickMode.HexCenter) {
-                    var pickedHex = Map.PickHex(ray);
-                    if (pickedHex != null) {
-                        DisplayText = "Over: " + pickedHex.MapPos;
-                        var mapDirty = false;
-                        if (Input.MouseClicked(true)) {
-                            Map.RaiseHex(pickedHex);
-                            mapDirty = true;
-                        } else if (Input.MouseClicked(false)) {
-                            Map.LowerHex(pickedHex);
-                            mapDirty = true;
-                        }
-                        if (mapDirty) {
-                            Map.Rebuild(GraphicsDevice);
-                        }
+                var vertex = Map.PickVertex(ray);
+                if (vertex != null) {
+                    DisplayText = "Over: " + vertex;
+                    var mapDirty = false;
+                    if (Input.MouseDown(true)) {
+                        Map.RaiseVertex(vertex.Value);
+                        mapDirty = true;
+                    } else if (Input.MouseDown(false)) {
+                        Map.LowerVertex(vertex.Value);
+                        mapDirty = true;
                     }
-                } else if (pickMode == PickMode.Vertex) {
-                    var vertex = Map.PickVertex(ray);
-                    if (vertex != null) {
-                        DisplayText = "Over: " + vertex;
-                        var mapDirty = false;
-                        if (Input.MouseClicked(true)) {
-                            Map.RaiseVertex(vertex.Value);
-                            mapDirty = true;
-                        } else if (Input.MouseClicked(false)) {
-                            Map.LowerVertex(vertex.Value);
-                            mapDirty = true;
-                        }
-                        if (mapDirty) {
-                            Map.Rebuild(GraphicsDevice);
-                        }
+                    if (mapDirty) {
+                        Map.Rebuild(GraphicsDevice);
                     }
                 }
+
 
             }
 
@@ -207,7 +176,7 @@ namespace HexGame {
             //BasicEffect.EnableDefaultLighting();
 
             Map.Draw(GraphicsDevice, BasicEffect, spriteBatch, Camera);
-            
+
             DrawDebugText();
 
             base.Draw(gameTime);
