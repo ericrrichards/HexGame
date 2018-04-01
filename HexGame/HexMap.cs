@@ -32,6 +32,8 @@
         public bool ShowCoords { get; set; }
         public bool ShowGrid { get; set; }
         public bool Wireframe { get; set; }
+        public bool ShowHexHeights { get; set; }
+
         public MeshType MeshType { get; }
 
         private readonly SpriteFont _font;
@@ -147,6 +149,8 @@
             }
             if (ShowCoords) {
                 DrawHexCoords(spriteBatch, camera);
+            } else if (ShowHexHeights) {
+                DrawHexHeights(spriteBatch, camera);
             }
         }
 
@@ -166,6 +170,25 @@
                 var projected = spriteBatch.GraphicsDevice.Viewport.Project(hex.Position, camera.ProjectionMatrix, camera.ViewMatrix, camera.WorldMatrix);
                 var screen = new Vector2(projected.X, projected.Y);
                 var pos = $"{hex.MapPos.X}, {hex.MapPos.Y}";
+                var m = _font.MeasureString(pos);
+                spriteBatch.DrawString(_font, pos, screen - m / 2, Color.White);
+            }
+            
+
+            spriteBatch.End();
+        }
+        private void DrawHexHeights(SpriteBatch spriteBatch, Camera camera) {
+            if (_font == null) {
+                return;
+            }
+            spriteBatch.Begin();
+            foreach (var hex in Hexes) {
+                if (camera.Frustum.Contains(hex.Position) != ContainmentType.Contains) {
+                    continue;
+                }
+                var projected = spriteBatch.GraphicsDevice.Viewport.Project(hex.Position, camera.ProjectionMatrix, camera.ViewMatrix, camera.WorldMatrix);
+                var screen = new Vector2(projected.X, projected.Y);
+                var pos = $"{hex.Position.Y/HeightStep}";
                 var m = _font.MeasureString(pos);
                 spriteBatch.DrawString(_font, pos, screen - m / 2, Color.White);
             }

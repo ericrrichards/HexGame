@@ -13,7 +13,7 @@
     public class Hexagon {
         internal string DebugDisplayString => $"{MapPos.X} {MapPos.Y}";
         public float HexWidth { get; }
-        public Vector3 Position { get; }
+        public Vector3 Position { get; private set; }
         public Point MapPos { get; set; }
 
         public Dictionary<HexagonPoint, Vector3> Points { get; }
@@ -67,6 +67,9 @@
             var center=  Points[p];
             center.Y += dy;
             Points[p] = center;
+            if (p == HexagonPoint.Center) {
+                Position = center;
+            }
             BuildBounds();
         }
         public void Raise(float dy, IEnumerable<HexagonPoint> points) {

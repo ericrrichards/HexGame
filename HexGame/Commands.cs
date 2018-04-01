@@ -17,5 +17,6 @@
         public const string ToggleHexGrid = "ToggleHexGrid";
         public const string ToggleWireframe = "ToggleWireframe";
         public const string TogglePickMode = "TogglePickMode";
+        public const string ToggleHexHeights = "ToggleHexHeights";
     }
 }

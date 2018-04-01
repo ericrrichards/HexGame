@@ -68,7 +68,8 @@ namespace HexGame {
                 [Commands.ToggleHexCoordinates] = new List<Keys> { Keys.C },
                 [Commands.ToggleHexGrid] = new List<Keys> { Keys.G },
                 [Commands.ToggleWireframe] = new List<Keys> { Keys.W },
-                [Commands.TogglePickMode] = new List<Keys> { Keys.P }
+                [Commands.TogglePickMode] = new List<Keys> { Keys.P },
+                [Commands.ToggleHexHeights] = new List<Keys>{Keys.H}
             };
 
             Input.AddBindings(bindings);
@@ -140,6 +141,9 @@ namespace HexGame {
             }
             if (Input.IsPressed(Commands.ToggleWireframe)) {
                 Map.Wireframe = !Map.Wireframe;
+            }
+            if (Input.IsPressed(Commands.ToggleHexHeights)) {
+                Map.ShowHexHeights = !Map.ShowHexHeights;
             }
 
             DisplayText = "Over: ";
