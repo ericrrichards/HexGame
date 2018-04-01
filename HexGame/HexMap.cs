@@ -37,9 +37,10 @@
         private readonly SpriteFont _font;
 
         private const float HeightStep = 0.25f;
+        public Texture2D Texture { get; set; }
         
 
-        public HexMap(GraphicsDevice gd, int width, int height, SpriteFont font = null, MeshType meshType=MeshType.Smooth) {
+        public HexMap(GraphicsDevice gd, int width, int height, Texture2D texture, SpriteFont font = null, MeshType meshType=MeshType.Smooth) {
             _font = font;
             HexSize = 0.5f;
             Width = width;
@@ -47,6 +48,7 @@
             Hexes = new List<Hexagon>();
             MeshType = meshType;
 
+            Texture = texture;
             var hexHeight = HexMetrics.Height(HexSize);
             for (var x = 0; x < Width; x++) {
                 for (var y = 0; y < Height; y++) {
@@ -82,7 +84,7 @@
         public void Rebuild(GraphicsDevice gd, bool force=false) {
             switch (MeshType) {
                 case MeshType.Smooth:
-                    Meshes = new List<HexMapMesh>{new HexMapMeshSmooth(gd, Hexes)};
+                    Meshes = new List<HexMapMesh>{new HexMapMeshSmooth(gd, Hexes, Texture)};
                     break;
                 case MeshType.Flat:
                     if (force) {
@@ -98,7 +100,7 @@
                                         }
                                     }
                                 }
-                                Meshes.Add(new HexMapMeshFlat(gd, patchHexes));
+                                Meshes.Add(new HexMapMeshFlat(gd, patchHexes, Texture));
 
 
                             }
@@ -110,7 +112,7 @@
                                 continue;
                             }
                             Meshes.Remove(mesh);
-                            Meshes.Add(new HexMapMeshFlat(gd, mesh.Hexes));
+                            Meshes.Add(new HexMapMeshFlat(gd, mesh.Hexes, Texture));
                         }
                     }
                     break;

@@ -8,14 +8,14 @@
 
     public abstract class HexMapMesh {
         public interface IGeometryBuilder {
-            void BuildGeometry(List<Hexagon> hexes, List<Vector3> vertices, List<uint> indices);
-            void GenerateNormals(VertexPositionColorNormal[] vertices, List<uint> indices);
+            void BuildGeometry(List<Hexagon> hexes, List<VertexPositionNormalTexture> vertices, List<uint> indices);
+            void GenerateNormals(VertexPositionNormalTexture[] vertices, List<uint> indices);
         }
 
         private static int MeshCounter;
 
         public int PatchID { get; }
-        protected List<Vector3> Vertices { get; }
+        protected List<VertexPositionNormalTexture> Vertices { get; }
         protected List<uint> Indices { get; }
 
         protected VertexBuffer VertexBuffer { get; }
@@ -29,12 +29,14 @@
 
         // TODO this is temporary
         protected float MaxHeight { get; } = 5;
+        private Texture2D Texture { get; }
 
-        protected HexMapMesh(GraphicsDevice gd, List<Hexagon> hexes, IGeometryBuilder builder) {
+        protected HexMapMesh(GraphicsDevice gd, List<Hexagon> hexes, IGeometryBuilder builder, Texture2D texture) {
             Interlocked.Increment(ref MeshCounter);
+            Texture = texture;
             Hexes = hexes;
             PatchID = MeshCounter;
-            Vertices = new List<Vector3>();
+            Vertices = new List<VertexPositionNormalTexture>();
             Indices = new List<uint>();
             TriangleCount = hexes.Count * 6;
             HexSize = hexes[0].HexWidth;
@@ -49,8 +51,8 @@
                 BoundingBox = BoundingBox.CreateMerged(BoundingBox, hexagon.BoundingBox);
             }
 
-            VertexBuffer = new VertexBuffer(gd, typeof(VertexPositionColorNormal), Vertices.Count, BufferUsage.WriteOnly);
-            var vpcs = Vertices.Select(v => new VertexPositionColorNormal(v, GetColor(v), Vector3.Up)).ToArray();
+            VertexBuffer = new VertexBuffer(gd, typeof(VertexPositionNormalTexture), Vertices.Count, BufferUsage.WriteOnly);
+            var vpcs = Vertices.ToArray();
             builder.GenerateNormals(vpcs, Indices);
             VertexBuffer.SetData(vpcs);
             IndexBuffer = new IndexBuffer(gd, IndexElementSize.ThirtyTwoBits, Indices.Count, BufferUsage.WriteOnly);
@@ -76,6 +78,9 @@
 
 
             effect.LightingEnabled = true;
+            effect.TextureEnabled = true;
+            effect.Texture = Texture;
+            effect.Alpha = 1.0f;
             
             effect.DirectionalLight0.Enabled = true;
             effect.DirectionalLight0.Direction = Vector3.Normalize(new Vector3(0, -1, 1));
@@ -98,12 +103,12 @@
             Vector3? ret = null;
             var sphere = new BoundingSphere(Vector3.Zero, HexSize/3);
             foreach (var vertex in Vertices) {
-                var td = ray.Intersects(sphere.Transform(Matrix.CreateTranslation(vertex)));
+                var td = ray.Intersects(sphere.Transform(Matrix.CreateTranslation(vertex.Position)));
                 if (td == null || !(td < d)) {
                     continue;
                 }
                 d = td.Value;
-                ret = vertex;
+                ret = vertex.Position;
             }
             distance = d;
             return ret;

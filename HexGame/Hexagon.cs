@@ -38,7 +38,9 @@
             var indices = HexMetrics.IndexOrder.ToList();
             while (indices.Any()) {
                 var tri = indices.Take(3).Select(i => Points[i]).ToList();
-                Triangles.Add(new Triangle(tri));
+                var uvs = indices.Take(3).Select(i => HexMetrics.UVs[i]).ToList();
+
+                Triangles.Add(new Triangle(tri, uvs));
                 indices = indices.Skip(3).ToList();
             }
             Border = Points.Where(kv => kv.Key != HexagonPoint.Center).Select(kv => kv.Value).ToList();

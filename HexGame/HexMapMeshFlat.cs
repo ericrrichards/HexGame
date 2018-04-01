@@ -7,25 +7,25 @@
 
     public class HexMapMeshFlat : HexMapMesh {
         
-        public HexMapMeshFlat(GraphicsDevice gd, List<Hexagon> hexes): base(gd, hexes, new FlatGeometryBuilder()) {
+        public HexMapMeshFlat(GraphicsDevice gd, List<Hexagon> hexes, Texture2D texture): base(gd, hexes, new FlatGeometryBuilder(), texture) {
             
         }
         private class FlatGeometryBuilder : IGeometryBuilder {
-            public void BuildGeometry(List<Hexagon> hexes, List<Vector3> vertices, List<uint> indices) {
+            public void BuildGeometry(List<Hexagon> hexes, List<VertexPositionNormalTexture> vertices, List<uint> indices) {
                 uint i = 0;
                 foreach (var hexagon in hexes) {
                     foreach (var tri in hexagon.Triangles) {
-                        vertices.Add(tri.P0);
+                        vertices.Add(new VertexPositionNormalTexture(tri.P0, Vector3.Up, tri.UV0));
                         indices.Add(i++);
-                        vertices.Add(tri.P1);
+                        vertices.Add(new VertexPositionNormalTexture(tri.P1, Vector3.Up, tri.UV1));
                         indices.Add(i++);
-                        vertices.Add(tri.P2);
+                        vertices.Add(new VertexPositionNormalTexture(tri.P2, Vector3.Up, tri.UV2));
                         indices.Add(i++);
                     }
                 }
             }
 
-            public void GenerateNormals(VertexPositionColorNormal[] vertices, List<uint> indices) {
+            public void GenerateNormals(VertexPositionNormalTexture[] vertices, List<uint> indices) {
                 for (var i = 0; i < vertices.Length; i++) {
                     vertices[i].Normal = Vector3.UnitY;
                 }

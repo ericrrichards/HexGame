@@ -6,23 +6,27 @@
     using Microsoft.Xna.Framework.Graphics;
 
     public class HexMapMeshSmooth : HexMapMesh {
+        public HexMapMeshSmooth(GraphicsDevice gd, List<Hexagon> hexes, Texture2D texture) : base(gd, hexes, new SmoothGeometryBuilder(), texture) {
+            
+        }
+
         private class SmoothGeometryBuilder : IGeometryBuilder {
-            public void BuildGeometry(List<Hexagon> hexes, List<Vector3> vertices, List<uint> indices) {
+            public void BuildGeometry(List<Hexagon> hexes, List<VertexPositionNormalTexture> vertices, List<uint> indices) {
                 uint i = 0;
                 var vertToIndex = new Dictionary<Vector3, uint>(new Vector3Comparer());
                 foreach (var hexagon in hexes) {
                     foreach (var tri in hexagon.Triangles) {
                         if (!vertToIndex.ContainsKey(tri.P0)) {
                             vertToIndex[tri.P0] = i++;
-                            vertices.Add(tri.P0);
+                            vertices.Add(new VertexPositionNormalTexture(tri.P0, Vector3.Up, tri.UV0));
                         }
                         if (!vertToIndex.ContainsKey(tri.P1)) {
                             vertToIndex[tri.P1] = i++;
-                            vertices.Add(tri.P1);
+                            vertices.Add(new VertexPositionNormalTexture(tri.P1, Vector3.Up, tri.UV1));
                         }
                         if (!vertToIndex.ContainsKey(tri.P2)) {
                             vertToIndex[tri.P2] = i++;
-                            vertices.Add(tri.P2);
+                            vertices.Add(new VertexPositionNormalTexture(tri.P2, Vector3.Up, tri.UV2));
                         }
                     }
                     foreach (var c in HexMetrics.IndexOrder) {
@@ -32,7 +36,7 @@
                 }
             }
 
-            public void GenerateNormals(VertexPositionColorNormal[] vertices, List<uint> indices) {
+            public void GenerateNormals(VertexPositionNormalTexture[] vertices, List<uint> indices) {
                 for (var i = 0; i < vertices.Length; i++) {
                     vertices[i].Normal = Vector3.UnitY;
                 }
@@ -51,9 +55,7 @@
             }
         }
 
-        public HexMapMeshSmooth(GraphicsDevice gd, List<Hexagon> hexes) : base(gd, hexes, new SmoothGeometryBuilder()) {
-            
-        }
+        
         
 
     }

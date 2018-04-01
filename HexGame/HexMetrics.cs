@@ -13,6 +13,16 @@
             HexagonPoint.Center, HexagonPoint.TopLeft, HexagonPoint.TopRight, HexagonPoint.Right, 
             HexagonPoint.BottomRight, HexagonPoint.BottomLeft, HexagonPoint.Left
         });
+        public static readonly Dictionary<HexagonPoint, Vector2> UVs = new Dictionary<HexagonPoint, Vector2> {
+            [HexagonPoint.Center] = new Vector2(0.5f, 0.5f),
+            [HexagonPoint.Left] = new Vector2(0, 0.5f),
+            [HexagonPoint.Right] = new Vector2(1, 0.5f),
+            [HexagonPoint.TopLeft] = new Vector2(.25f, 0),
+            [HexagonPoint.TopRight] = new Vector2(.75f, 0),
+            [HexagonPoint.BottomLeft] = new Vector2(.25f, 1),
+            [HexagonPoint.BottomRight] = new Vector2(.75f, 1)
+        };
+
         public static readonly IReadOnlyList<HexagonPoint> IndexOrder = new ReadOnlyCollection<HexagonPoint>(new List<HexagonPoint> {
             HexagonPoint.Center, HexagonPoint.TopLeft, HexagonPoint.TopRight,
             HexagonPoint.Center, HexagonPoint.TopRight, HexagonPoint.Right,

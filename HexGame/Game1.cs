@@ -79,7 +79,7 @@ namespace HexGame {
             Camera.LookAt(new Vector3(0, 10, 1), Vector3.Zero, Vector3.Up);
 
             BasicEffect = new BasicEffect(GraphicsDevice) {
-                VertexColorEnabled = true,
+                //VertexColorEnabled = true,
             };
 
 
@@ -98,8 +98,9 @@ namespace HexGame {
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
             _font = Content.Load<SpriteFont>("default");
-            Map = new HexMap(GraphicsDevice, 100, 100, _font, MeshType.Flat);
-
+            var texture = Content.Load<Texture2D>("Dry Grass 2");
+            Map = new HexMap(GraphicsDevice, 100, 100,texture, _font, MeshType.Flat );
+            
 
 
             // TODO: use this.Content to load your game content here

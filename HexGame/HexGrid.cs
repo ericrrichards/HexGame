@@ -52,13 +52,18 @@
         public void DrawGrid(GraphicsDevice gd, BasicEffect effect) {
             gd.SetVertexBuffer(GridVertexBuffer);
             gd.Indices = GridIndexBuffer;
+            
+
             var oldLighting = effect.LightingEnabled;
             effect.LightingEnabled = false;
+            effect.TextureEnabled = false;
+            effect.VertexColorEnabled = true;
             foreach (var pass in effect.CurrentTechnique.Passes) {
                 pass.Apply();
                 gd.DrawIndexedPrimitives(PrimitiveType.LineList, 0, 0, GridIndexCount / 2);
             }
             effect.LightingEnabled = oldLighting;
+            effect.VertexColorEnabled = false;
         }
     }
 }
