@@ -160,6 +160,9 @@
             }
             spriteBatch.Begin();
             foreach (var hex in Hexes) {
+                if (camera.Frustum.Contains(hex.Position) != ContainmentType.Contains) {
+                    continue;
+                }
                 var projected = spriteBatch.GraphicsDevice.Viewport.Project(hex.Position, camera.ProjectionMatrix, camera.ViewMatrix, camera.WorldMatrix);
                 var screen = new Vector2(projected.X, projected.Y);
                 var pos = $"{hex.MapPos.X}, {hex.MapPos.Y}";
