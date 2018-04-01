@@ -134,7 +134,9 @@
 
         public void Draw(GraphicsDevice gd, BasicEffect effect, SpriteBatch spriteBatch, Camera camera) {
             foreach (var mesh in Meshes) {
-                mesh.DrawHexes(gd, effect, Wireframe);    
+                if (camera.Frustum.Intersects(mesh.BoundingBox)) {
+                    mesh.DrawHexes(gd, effect, Wireframe);
+                }
             }
             
 

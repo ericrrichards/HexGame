@@ -26,8 +26,14 @@ namespace HexGame {
         private HexMap Map { get; set; }
         private string DisplayText { get; set; }
 
+        private int _totalFrames;
+        private TimeSpan _elapsedTime;
+        private float _fps;
+
         public Game1() {
             graphics = new GraphicsDeviceManager(this);
+            graphics.SynchronizeWithVerticalRetrace = false;
+            IsFixedTimeStep = false;
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
         }
@@ -42,7 +48,7 @@ namespace HexGame {
             // TODO: Add your initialization logic here
 
             base.Initialize();
-
+            
             Input = new Input();
 
             var bindings = new Dictionary<string, List<Keys>> {
@@ -113,6 +119,13 @@ namespace HexGame {
         /// </summary>
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime) {
+            _elapsedTime += gameTime.ElapsedGameTime;
+            if (_elapsedTime.TotalMilliseconds > 1000) {
+                _fps = _totalFrames;
+                _totalFrames = 0;
+                _elapsedTime -= TimeSpan.FromSeconds(1);
+            }
+
             Input.Update();
 
             if (Input.IsDown(Commands.GameExit)) {
@@ -167,6 +180,7 @@ namespace HexGame {
         /// </summary>
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime) {
+            _totalFrames++;
 
             BasicEffect.Projection = Camera.ProjectionMatrix;
             BasicEffect.View = Camera.ViewMatrix;
@@ -178,6 +192,10 @@ namespace HexGame {
             Map.Draw(GraphicsDevice, BasicEffect, spriteBatch, Camera);
 
             DrawDebugText();
+
+            spriteBatch.Begin();
+            spriteBatch.DrawString(_font, $"FPS {_fps.ToString("F1")}", new Vector2(0, 20), Color.White  );
+            spriteBatch.End();
 
             base.Draw(gameTime);
         }

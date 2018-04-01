@@ -14,9 +14,11 @@
 
 
 
-        public Matrix ProjectionMatrix { get; set; }
-        public Matrix ViewMatrix { get; set; }
-        public Matrix WorldMatrix { get; set; }
+        public Matrix ProjectionMatrix { get; private set; }
+        public Matrix ViewMatrix { get; private set; }
+        public Matrix WorldMatrix { get; private set; }
+        public BoundingFrustum Frustum { get; private set; }
+
         private float CameraSpeed { get; set; } = 3f;
         private readonly Input _input;
 
@@ -94,6 +96,7 @@
 
 
             ViewMatrix = Matrix.CreateLookAt(Position, Target, Vector3.Up);
+            Frustum = new BoundingFrustum(ViewMatrix * ProjectionMatrix);
 
             Right = new Vector3(ViewMatrix.M11, ViewMatrix.M21, ViewMatrix.M31);
             Right.Normalize();
@@ -140,7 +143,7 @@
             if (mouseScroll != 0) {
                 Zoom(dt * CameraSpeed * mouseScroll/10.0f);
             }
-
+            
 
             UpdateViewMatrix();
         }
