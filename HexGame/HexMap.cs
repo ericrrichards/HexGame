@@ -148,17 +148,13 @@
                 HexGrid.DrawGrid(gd, effect);
             }
             if (ShowCoords) {
-                DrawHexCoords(spriteBatch, camera);
+                DrawHexLabels(spriteBatch, camera, hex => $"{hex.MapPos.X}, {hex.MapPos.Y}");
             } else if (ShowHexHeights) {
-                DrawHexHeights(spriteBatch, camera);
+                DrawHexLabels(spriteBatch, camera, hex => $"{hex.Position.Y/HeightStep}");
             }
         }
 
-        
-
-        
-
-        private void DrawHexCoords(SpriteBatch spriteBatch, Camera camera) {
+        private void DrawHexLabels(SpriteBatch spriteBatch, Camera camera, Func< Hexagon, string> displayFunc) {
             if (_font == null) {
                 return;
             }
@@ -169,26 +165,7 @@
                 }
                 var projected = spriteBatch.GraphicsDevice.Viewport.Project(hex.Position, camera.ProjectionMatrix, camera.ViewMatrix, camera.WorldMatrix);
                 var screen = new Vector2(projected.X, projected.Y);
-                var pos = $"{hex.MapPos.X}, {hex.MapPos.Y}";
-                var m = _font.MeasureString(pos);
-                spriteBatch.DrawString(_font, pos, screen - m / 2, Color.White);
-            }
-            
-
-            spriteBatch.End();
-        }
-        private void DrawHexHeights(SpriteBatch spriteBatch, Camera camera) {
-            if (_font == null) {
-                return;
-            }
-            spriteBatch.Begin();
-            foreach (var hex in Hexes) {
-                if (camera.Frustum.Contains(hex.Position) != ContainmentType.Contains) {
-                    continue;
-                }
-                var projected = spriteBatch.GraphicsDevice.Viewport.Project(hex.Position, camera.ProjectionMatrix, camera.ViewMatrix, camera.WorldMatrix);
-                var screen = new Vector2(projected.X, projected.Y);
-                var pos = $"{hex.Position.Y/HeightStep}";
+                var pos = displayFunc(hex);
                 var m = _font.MeasureString(pos);
                 spriteBatch.DrawString(_font, pos, screen - m / 2, Color.White);
             }
