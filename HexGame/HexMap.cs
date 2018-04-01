@@ -35,6 +35,7 @@
 
         private readonly SpriteFont _font;
 
+        private const float HeightStep = 0.25f;
         
 
         public HexMap(GraphicsDevice gd, int width, int height, SpriteFont font = null, MeshType meshType=MeshType.Smooth) {
@@ -152,8 +153,8 @@
         public Vector3? PickVertex(Ray ray) {
             return Mesh.PickVertex(ray);
         }
-
-        public void RaiseVertex(Vector3 vertex, float dy) {
+        
+        private void RaiseVertex(Vector3 vertex, float dy) {
             var comparer = new Vector3Comparer();
             var affectedHexes = Hexes.Where(h => h.Points.Values.Any(v => comparer.Equals(v, vertex)))
                                      .Select(h => new {
@@ -165,16 +166,29 @@
             }
         }
 
-        public void RaiseHex(Hexagon hex, float dy) {
-            var comparer = new Vector3Comparer();
-            
+        public void RaiseVertex(Vector3 vertex) {
+            RaiseVertex(vertex, HeightStep);
+        }
 
+        public void LowerVertex(Vector3 vertex) {
+            RaiseVertex(vertex, -HeightStep);
+        }
+
+        private void RaiseHex(Hexagon hex, float dy) {
             var neighbors = hex.Neighbors.Values.Where(n=>n!=null).ToList();
             foreach (var neighbor in neighbors) {
                 var pointsToRaise = hex.GetMatchingPoints(neighbor);
                 neighbor.Raise(dy, pointsToRaise);
             }
             hex.Raise(dy, HexMetrics.PointOrder);
+        }
+
+        public void RaiseHex(Hexagon hex) {
+            RaiseHex(hex, HeightStep);
+        }
+
+        public void LowerHex(Hexagon hex) {
+            RaiseHex(hex, -HeightStep);
         }
     }
 }

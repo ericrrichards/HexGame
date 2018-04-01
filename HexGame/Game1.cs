@@ -155,10 +155,10 @@ namespace HexGame {
                         DisplayText = "Over: " + pickedHex.MapPos;
                         var mapDirty = false;
                         if (Input.MouseClicked(true)) {
-                            Map.RaiseHex(pickedHex, 0.25f);
+                            Map.RaiseHex(pickedHex);
                             mapDirty = true;
                         } else if (Input.MouseClicked(false)) {
-                            Map.RaiseHex(pickedHex, -0.25f);
+                            Map.LowerHex(pickedHex);
                             mapDirty = true;
                         }
                         if (mapDirty) {
@@ -171,10 +171,10 @@ namespace HexGame {
                         DisplayText = "Over: " + vertex;
                         var mapDirty = false;
                         if (Input.MouseClicked(true)) {
-                            Map.RaiseVertex(vertex.Value, 0.25f);
+                            Map.RaiseVertex(vertex.Value);
                             mapDirty = true;
                         } else if (Input.MouseClicked(false)) {
-                            Map.RaiseVertex(vertex.Value, -0.25f);
+                            Map.LowerVertex(vertex.Value);
                             mapDirty = true;
                         }
                         if (mapDirty) {
