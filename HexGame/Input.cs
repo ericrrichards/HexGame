@@ -15,6 +15,7 @@ namespace HexGame {
 
         private GamePadState _currentPad;
         private GamePadState _previousPad;
+        
 
         private Dictionary<string, List<Keys>> KeyBindingMap { get; }
 
@@ -32,6 +33,8 @@ namespace HexGame {
 
             _previousMouse = _currentMouse;
             _currentMouse = Mouse.GetState();
+
+            
         }
 
         public bool IsDown(string vkey) {
@@ -54,6 +57,11 @@ namespace HexGame {
                 return _currentMouse.RightButton == ButtonState.Pressed && _previousMouse.RightButton == ButtonState.Released;
             }
         }
+
+        public int MouseScrolled() {
+            return _previousMouse.ScrollWheelValue - _currentMouse.ScrollWheelValue;
+        }
+
 
 
         public void SetBinding(string vkey, params Keys[] keys) {

@@ -136,6 +136,10 @@
             if (_input.IsDown(Commands.CameraOrbitDown)) {
                 Pitch(-dt*CameraSpeed);
             }
+            var mouseScroll = _input.MouseScrolled();
+            if (mouseScroll != 0) {
+                Zoom(dt * CameraSpeed * mouseScroll/10.0f);
+            }
 
 
             UpdateViewMatrix();
