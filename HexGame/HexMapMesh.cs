@@ -1,6 +1,7 @@
 ﻿namespace HexGame {
     using System.Collections.Generic;
     using System.Linq;
+    using System.Threading;
 
     using Microsoft.Xna.Framework;
     using Microsoft.Xna.Framework.Graphics;
@@ -11,6 +12,9 @@
             void GenerateNormals(VertexPositionColorNormal[] vertices, List<uint> indices);
         }
 
+        private static int MeshCounter;
+
+        public int PatchID { get; }
         protected List<Vector3> Vertices { get; }
         protected List<uint> Indices { get; }
 
@@ -21,19 +25,29 @@
         protected float HexSize { get; }
 
         public BoundingBox BoundingBox;
+        public List<Hexagon> Hexes { get; }
 
         // TODO this is temporary
         protected float MaxHeight { get; } = 5;
 
         protected HexMapMesh(GraphicsDevice gd, List<Hexagon> hexes, IGeometryBuilder builder) {
+            Interlocked.Increment(ref MeshCounter);
+            Hexes = hexes;
+            PatchID = MeshCounter;
             Vertices = new List<Vector3>();
             Indices = new List<uint>();
             TriangleCount = hexes.Count * 6;
             HexSize = hexes[0].HexWidth;
+            foreach (var hexagon in hexes) {
+                hexagon.PatchID = PatchID;
+            }
 
             builder.BuildGeometry(hexes, Vertices, Indices);
 
-            BoundingBox = BoundingBox.CreateFromPoints(Vertices);
+            BoundingBox = hexes[0].BoundingBox;
+            foreach (var hexagon in hexes.Skip(1)) {
+                BoundingBox = BoundingBox.CreateMerged(BoundingBox, hexagon.BoundingBox);
+            }
 
             VertexBuffer = new VertexBuffer(gd, typeof(VertexPositionColorNormal), Vertices.Count, BufferUsage.WriteOnly);
             var vpcs = Vertices.Select(v => new VertexPositionColorNormal(v, GetColor(v), Vector3.Up)).ToArray();
@@ -75,7 +89,8 @@
             }
             gd.RasterizerState = rs;
         }
-        public Vector3? PickVertex(Ray ray) {
+        public Vector3? PickVertex(Ray ray, out float? distance) {
+            distance = null;
             if (ray.Intersects(BoundingBox) == null) {
                 return null;
             }
@@ -90,7 +105,7 @@
                 d = td.Value;
                 ret = vertex;
             }
-
+            distance = d;
             return ret;
         }
 

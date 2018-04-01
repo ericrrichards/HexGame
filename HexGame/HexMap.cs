@@ -22,9 +22,10 @@
         public float HexSize { get; }
         public List<Hexagon> Hexes { get; }
 
-        
-        
-        private HexMapMesh Mesh { get; set; }
+
+        private const int PatchSize = 10;
+        private List<HexMapMesh> Meshes { get; set; }
+        private HashSet<int> DirtyPatches { get; } = new HashSet<int>();
         private HexGrid HexGrid { get; set; }
 
 
@@ -50,12 +51,7 @@
             for (var x = 0; x < Width; x++) {
                 for (var y = 0; y < Height; y++) {
                     //TODO bump this out into a helper function
-                    var position = Vector3.Zero;
-                    position.X += 1.5f * HexSize * x;
-                    position.Z += hexHeight * y;
-                    if (x % 2 == 1) {
-                        position.Z += hexHeight / 2;
-                    }
+                    var position = GetHexCenter(x, y, hexHeight);
                     var hexagon = new Hexagon(position, HexSize) {
                         MapPos = new Point(x, y)
                     };
@@ -69,21 +65,60 @@
                 
             }
 
-            Rebuild(gd);
+            Rebuild(gd, true);
 
         }
-        public void Rebuild(GraphicsDevice gd) {
+
+        private Vector3 GetHexCenter(int x, int y, float hexHeight) {
+            var position = Vector3.Zero;
+            position.X += 1.5f * HexSize * x;
+            position.Z += hexHeight * y;
+            if (x % 2 == 1) {
+                position.Z += hexHeight / 2;
+            }
+            return position;
+        }
+
+        public void Rebuild(GraphicsDevice gd, bool force=false) {
             switch (MeshType) {
                 case MeshType.Smooth:
-                    Mesh = new HexMapMeshSmooth(gd, Hexes);
+                    Meshes = new List<HexMapMesh>{new HexMapMeshSmooth(gd, Hexes)};
                     break;
                 case MeshType.Flat:
-                    Mesh = new HexMapMeshFlat(gd, Hexes);
+                    if (force) {
+                        Meshes = new List<HexMapMesh>();
+                        for (var xp = 0; xp < Width; xp += PatchSize) {
+                            for (var yp = 0; yp < Height; yp += PatchSize) {
+                                var patchHexes = new List<Hexagon>();
+                                for (var x = xp; x < xp + PatchSize; x++) {
+                                    for (var y = yp; y < yp + PatchSize; y++) {
+                                        var hex = GetHex(x, y);
+                                        if (hex != null) {
+                                            patchHexes.Add(hex);
+                                        }
+                                    }
+                                }
+                                Meshes.Add(new HexMapMeshFlat(gd, patchHexes));
+
+
+                            }
+                        }
+                    } else {
+                        foreach (var dirtyPatch in DirtyPatches) {
+                            var mesh = Meshes.FirstOrDefault(m => m.PatchID == dirtyPatch);
+                            if (mesh == null) {
+                                continue;
+                            }
+                            Meshes.Remove(mesh);
+                            Meshes.Add(new HexMapMeshFlat(gd, mesh.Hexes));
+                        }
+                    }
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
             }
             HexGrid = new HexGrid(gd, Hexes, Color.Gray);
+            DirtyPatches.Clear();
         }
         [CanBeNull]
         public Hexagon GetHex(Point p) {
@@ -98,7 +133,10 @@
         }
 
         public void Draw(GraphicsDevice gd, BasicEffect effect, SpriteBatch spriteBatch, Camera camera) {
-            Mesh.DrawHexes(gd, effect, Wireframe);
+            foreach (var mesh in Meshes) {
+                mesh.DrawHexes(gd, effect, Wireframe);    
+            }
+            
 
             if (ShowGrid) {
                 HexGrid.DrawGrid(gd, effect);
@@ -132,7 +170,7 @@
         
 
         public Hexagon PickHex(Ray ray) {
-            if (ray.Intersects(Mesh.BoundingBox) == null) {
+            if (Meshes.All(m => ray.Intersects(m.BoundingBox) == null)) {
                 return null;
             }
             var d = float.MaxValue;
@@ -151,7 +189,19 @@
         }
 
         public Vector3? PickVertex(Ray ray) {
-            return Mesh.PickVertex(ray);
+            Vector3? vertex = null;
+            var d = float.MaxValue;
+            foreach (var mesh in Meshes) {
+                if (ray.Intersects(mesh.BoundingBox) == null) {
+                    continue;
+                }
+                var v = mesh.PickVertex(ray, out var td);
+                if (v != null && td != null && td < d) {
+                    d = td.Value;
+                    vertex = v;
+                }
+            }
+            return vertex;
         }
         
         private void RaiseVertex(Vector3 vertex, float dy) {
@@ -167,6 +217,7 @@
             foreach (var affectedHex in affectedHexes) {
                 affectedHex.hex.Raise(dy, affectedHex.point);
             }
+            affectedHexes.Select(h => h.hex.PatchID).Distinct().ToList().ForEach(i => DirtyPatches.Add(i));
         }
 
         public void RaiseVertex(Vector3 vertex) {

@@ -92,7 +92,7 @@ namespace HexGame {
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
             _font = Content.Load<SpriteFont>("default");
-            Map = new HexMap(GraphicsDevice, 15, 15, _font, MeshType.Flat);
+            Map = new HexMap(GraphicsDevice, 100, 100, _font, MeshType.Flat);
 
 
 

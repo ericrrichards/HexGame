@@ -21,8 +21,10 @@
         public List<Triangle> Triangles { get; private set; }
         public List<Vector3> Border { get; private set; }
         public Dictionary<HexDirection, Hexagon> Neighbors { get; } = new Dictionary<HexDirection, Hexagon>();
+        public int PatchID { get; set; }
 
         public Hexagon(Vector3 position, float hexWidth = 1.0f) {
+            PatchID = -1;
             HexWidth = hexWidth;
             Position = position;
 
