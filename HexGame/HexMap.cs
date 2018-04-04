@@ -26,7 +26,7 @@
         private const int PatchSize = 10;
         private List<HexMapMesh> Meshes { get; set; }
         private HashSet<int> DirtyPatches { get; } = new HashSet<int>();
-        private HexGrid HexGrid { get; set; }
+        //private HexGrid HexGrid { get; set; }
 
 
         public bool ShowCoords { get; set; }
@@ -54,7 +54,6 @@
             var hexHeight = HexMetrics.Height(HexSize);
             for (var x = 0; x < Width; x++) {
                 for (var y = 0; y < Height; y++) {
-                    //TODO bump this out into a helper function
                     var position = GetHexCenter(x, y, hexHeight);
                     var hexagon = new Hexagon(position, HexSize) {
                         MapPos = new Point(x, y)
@@ -121,7 +120,6 @@
                 default:
                     throw new ArgumentOutOfRangeException();
             }
-            HexGrid = new HexGrid(gd, Hexes, Color.Gray);
             DirtyPatches.Clear();
         }
         [CanBeNull]
@@ -145,7 +143,10 @@
             
 
             if (ShowGrid) {
-                HexGrid.DrawGrid(gd, effect);
+                foreach (var mesh in Meshes) {
+                    mesh.DrawGrid(gd, effect);
+                }
+                
             }
             if (ShowCoords) {
                 DrawHexLabels(spriteBatch, camera, hex => $"{hex.MapPos.X}, {hex.MapPos.Y}");

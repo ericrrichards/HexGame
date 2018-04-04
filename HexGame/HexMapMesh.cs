@@ -12,7 +12,7 @@
             void GenerateNormals(VertexPositionNormalTexture[] vertices, List<uint> indices);
         }
 
-        private static int MeshCounter;
+        private static int meshCounter;
 
         public int PatchID { get; }
         protected List<VertexPositionNormalTexture> Vertices { get; }
@@ -27,15 +27,16 @@
         public BoundingBox BoundingBox;
         public List<Hexagon> Hexes { get; }
 
-        // TODO this is temporary
-        protected float MaxHeight { get; } = 5;
+        
         private Texture2D Texture { get; }
 
+        private HexGrid Grid { get; }
+
         protected HexMapMesh(GraphicsDevice gd, List<Hexagon> hexes, IGeometryBuilder builder, Texture2D texture) {
-            Interlocked.Increment(ref MeshCounter);
+            Interlocked.Increment(ref meshCounter);
             Texture = texture;
             Hexes = hexes;
-            PatchID = MeshCounter;
+            PatchID = meshCounter;
             Vertices = new List<VertexPositionNormalTexture>();
             Indices = new List<uint>();
             TriangleCount = hexes.Count * 6;
@@ -57,23 +58,15 @@
             VertexBuffer.SetData(vpcs);
             IndexBuffer = new IndexBuffer(gd, IndexElementSize.ThirtyTwoBits, Indices.Count, BufferUsage.WriteOnly);
             IndexBuffer.SetData(Indices.ToArray());
+            Grid = new HexGrid(gd, Hexes, Color.Gray);
         }
-        private Color GetColor(Vector3 v) {
-            const float floor = 0.25f;
-            const float ceiling = 1.0f;
-            const float median = (floor + ceiling) / 2;
-            var colorStep = ceiling - floor / (MaxHeight * 2);
-            var value = MathHelper.Clamp(median + v.Y / MaxHeight * colorStep, floor, ceiling);
 
-
-            return new Color(0, value, 0);
-        }
         public void DrawHexes(GraphicsDevice gd, BasicEffect effect, bool wireframe=false) {
             gd.SetVertexBuffer(VertexBuffer);
             gd.Indices = IndexBuffer;
             var rs = gd.RasterizerState;
             if (wireframe) {
-                gd.RasterizerState = new RasterizerState() { FillMode = FillMode.WireFrame };
+                gd.RasterizerState = new RasterizerState { FillMode = FillMode.WireFrame };
             }
 
 
@@ -114,5 +107,8 @@
             return ret;
         }
 
+        public void DrawGrid(GraphicsDevice gd, BasicEffect effect) {
+            Grid.DrawGrid(gd, effect);
+        }
     }
 }
