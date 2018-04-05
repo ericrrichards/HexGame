@@ -8,16 +8,25 @@
 
     using NUnit.Framework;
 
+    using ProtoBuf;
+
     [Serializable]
+    [ProtoContract]
     public class MapRecord {
+        [ProtoMember(1)]
         public string Name { get; set; }
+        [ProtoMember(2)]
         public int Width { get; set; }
+        [ProtoMember(3)]
         public int Height { get;set; }
+        [ProtoMember(4)]
         public string BaseTexture {get; set; }
+        [ProtoMember(5)]
         public HexRecord[] Hexes { get; set; }
     }
     [Serializable]
     [DataContract]
+    [ProtoContract]
     public struct HexRecord {
         //TODO could use some tricks to smoosh the size of this down some...
         public Point MapPos {
@@ -26,10 +35,12 @@
         }
 
         
-
+        
         [DataMember]
+        [ProtoMember(1)]
         public ushort Pos { get;set; }
         [DataMember]
+        [ProtoMember(2)]
         public ulong H { get; set; }
 
         public int[] Heights {

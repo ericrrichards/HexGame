@@ -14,6 +14,8 @@
 
     using Newtonsoft.Json;
 
+    using ProtoBuf;
+
     public enum MeshType {
         Smooth,
         Flat
@@ -298,6 +300,19 @@
             }
         }
 
+        public void SaveToFileProto(string filename) {
+            var record = new MapRecord {
+                Name = Path.GetFileNameWithoutExtension(filename),
+                Width = Width,
+                Height = Height,
+                BaseTexture = Texture.Name,
+                Hexes = Hexes.Select(h => new HexRecord(h, HeightStep)).ToArray()
+            };
+            using (var stream = File.OpenWrite(filename)) {
+                Serializer.Serialize(stream, record);
+            }
+        }
+
         public static HexMap LoadFromFile(string filename, GraphicsDevice gd, ContentManager content, SpriteFont font=null) {
             var data = File.ReadAllText(filename);
             var record = JsonConvert.DeserializeObject<MapRecord>(data);
@@ -310,6 +325,13 @@
                 return new HexMap(gd, record, content, font);
             }
             
+        }
+
+        public static HexMap LoadFromFileProto(string filename, GraphicsDevice gd, ContentManager content, SpriteFont font = null) {
+            using (var stream = File.OpenRead(filename)) {
+                var record = Serializer.Deserialize<MapRecord>(stream);
+                return new HexMap(gd, record, content, font);
+            }
         }
 
     }

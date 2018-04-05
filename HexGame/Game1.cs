@@ -150,24 +150,28 @@ namespace HexGame {
                 Map.ShowHexHeights = !Map.ShowHexHeights;
             }
             if (Input.IsPressed(Commands.SaveMap)) {
-                var saveFileDialog = new SaveFileDialog{ DefaultExt = ".map", Filter = "Map files|*.map|Binary Map|*.mapb", Title = "Save Map"};
+                var saveFileDialog = new SaveFileDialog{ DefaultExt = ".map", Filter = "Map files|*.map|Binary Map|*.mapb|Proto Map|*.mapp", Title = "Save Map"};
                 if (saveFileDialog.ShowDialog() == DialogResult.OK) {
                     var extension = Path.GetExtension(saveFileDialog.FileName);
                     if (extension == ".map") {
                         Map.SaveToFile(saveFileDialog.FileName);
                     } else if (extension == ".mapb") {
                         Map.SaveToFileBinary(saveFileDialog.FileName);
+                    } else if (extension == ".mapp") {
+                        Map.SaveToFileProto(saveFileDialog.FileName);
                     }
                 }
             }
             if (Input.IsPressed(Commands.LoadMap)) {
-                var loadFileDialog = new OpenFileDialog { DefaultExt = "map", Filter = "Map files|*.map|Binary Map|*.mapb", Title = "Load Map"};
+                var loadFileDialog = new OpenFileDialog { DefaultExt = "map", Filter = "Map files|*.map|Binary Map|*.mapb|Proto Map|*.mapp", Title = "Load Map"};
                 if (loadFileDialog.ShowDialog() == DialogResult.OK) {
                     var extension = Path.GetExtension(loadFileDialog.FileName);
                     if (extension == ".map") {
                         Map = HexMap.LoadFromFile(loadFileDialog.FileName, GraphicsDevice, Content, _font);
                     } else if (extension == ".mapb") {
                         Map = HexMap.LoadFromFileBinary(loadFileDialog.FileName, GraphicsDevice, Content, _font);
+                    } else if (extension == ".mapp") {
+                        Map = HexMap.LoadFromFileProto(loadFileDialog.FileName, GraphicsDevice, Content, _font);
                     }
                 }
             }
