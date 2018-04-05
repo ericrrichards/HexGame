@@ -5,6 +5,7 @@ using Microsoft.Xna.Framework.Input;
 namespace HexGame {
     using System;
     using System.Collections.Generic;
+    using System.IO;
     using System.Windows.Forms;
 
     using Keys = Keys;
@@ -149,15 +150,25 @@ namespace HexGame {
                 Map.ShowHexHeights = !Map.ShowHexHeights;
             }
             if (Input.IsPressed(Commands.SaveMap)) {
-                var saveFileDialog = new SaveFileDialog{ DefaultExt = "map", Filter = "Map files|*.map", Title = "Save Map"};
+                var saveFileDialog = new SaveFileDialog{ DefaultExt = ".map", Filter = "Map files|*.map|Binary Map|*.mapb", Title = "Save Map"};
                 if (saveFileDialog.ShowDialog() == DialogResult.OK) {
-                    Map.SaveToFile(saveFileDialog.FileName);
+                    var extension = Path.GetExtension(saveFileDialog.FileName);
+                    if (extension == ".map") {
+                        Map.SaveToFile(saveFileDialog.FileName);
+                    } else if (extension == ".mapb") {
+                        Map.SaveToFileBinary(saveFileDialog.FileName);
+                    }
                 }
             }
             if (Input.IsPressed(Commands.LoadMap)) {
-                var loadFileDialog = new OpenFileDialog { DefaultExt = "map", Filter = "Map files|*.map", Title = "Load Map"};
+                var loadFileDialog = new OpenFileDialog { DefaultExt = "map", Filter = "Map files|*.map|Binary Map|*.mapb", Title = "Load Map"};
                 if (loadFileDialog.ShowDialog() == DialogResult.OK) {
-                    Map = HexMap.LoadFromFile(loadFileDialog.FileName, GraphicsDevice, Content, _font);
+                    var extension = Path.GetExtension(loadFileDialog.FileName);
+                    if (extension == ".map") {
+                        Map = HexMap.LoadFromFile(loadFileDialog.FileName, GraphicsDevice, Content, _font);
+                    } else if (extension == ".mapb") {
+                        Map = HexMap.LoadFromFileBinary(loadFileDialog.FileName, GraphicsDevice, Content, _font);
+                    }
                 }
             }
 
