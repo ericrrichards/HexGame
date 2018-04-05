@@ -68,15 +68,18 @@
                     Hexes.Add(hexagon);
                 }
             }
+            ConnectHexes();
+
+            Rebuild(gd, true);
+
+        }
+
+        private void ConnectHexes() {
             foreach (var hexagon in Hexes) {
                 foreach (HexDirection dir in Enum.GetValues(typeof(HexDirection))) {
                     hexagon.Neighbors[dir] = GetHex(HexMetrics.GetNeighborCoords(hexagon.MapPos, dir));
                 }
-                
             }
-
-            Rebuild(gd, true);
-
         }
 
         private HexMap(GraphicsDevice gd, MapRecord record, ContentManager content, SpriteFont font=null) {
@@ -100,12 +103,7 @@
                     Hexes.Add(hexagon);
                 }
             }
-            foreach (var hexagon in Hexes) {
-                foreach (HexDirection dir in Enum.GetValues(typeof(HexDirection))) {
-                    hexagon.Neighbors[dir] = GetHex(HexMetrics.GetNeighborCoords(hexagon.MapPos, dir));
-                }
-                
-            }
+            ConnectHexes();
 
             Rebuild(gd, true);
         }

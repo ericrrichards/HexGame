@@ -3,7 +3,6 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
 namespace HexGame {
-    using System;
     using System.Collections.Generic;
     using System.IO;
     using System.Windows.Forms;
@@ -14,7 +13,6 @@ namespace HexGame {
     /// This is the main type for your game.
     /// </summary>
     public class Game1 : Game {
-        private const float HexSize = 0.5f;
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
         private SpriteFont _font;
@@ -29,16 +27,15 @@ namespace HexGame {
         private HexMap Map { get; set; }
         private string DisplayText { get; set; }
 
-        private int _totalFrames;
-        private TimeSpan _elapsedTime;
-        private float _fps;
+        private FrameCounter FrameCounter { get; set; }
 
         public Game1() {
             graphics = new GraphicsDeviceManager(this);
-            graphics.SynchronizeWithVerticalRetrace = false;
-            IsFixedTimeStep = false;
+            //graphics.SynchronizeWithVerticalRetrace = false;
+            //IsFixedTimeStep = false;
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
+            
         }
 
         /// <summary>
@@ -105,7 +102,7 @@ namespace HexGame {
             _font = Content.Load<SpriteFont>("default");
             var texture = Content.Load<Texture2D>("Dry Grass 2");
             Map = new HexMap(GraphicsDevice, 100, 100,texture, _font, MeshType.Flat );
-            
+            FrameCounter = new FrameCounter(_font);
 
 
             // TODO: use this.Content to load your game content here
@@ -125,12 +122,7 @@ namespace HexGame {
         /// </summary>
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime) {
-            _elapsedTime += gameTime.ElapsedGameTime;
-            if (_elapsedTime.TotalMilliseconds > 1000) {
-                _fps = _totalFrames;
-                _totalFrames = 0;
-                _elapsedTime -= TimeSpan.FromSeconds(1);
-            }
+            FrameCounter.Update(gameTime);
 
             Input.Update();
 
@@ -216,7 +208,8 @@ namespace HexGame {
         /// </summary>
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime) {
-            _totalFrames++;
+            FrameCounter.CountFrame();
+            
 
             BasicEffect.Projection = Camera.ProjectionMatrix;
             BasicEffect.View = Camera.ViewMatrix;
@@ -229,9 +222,7 @@ namespace HexGame {
 
             DrawDebugText();
 
-            spriteBatch.Begin();
-            spriteBatch.DrawString(_font, $"FPS {_fps:F1}", new Vector2(0, 20), Color.White  );
-            spriteBatch.End();
+            FrameCounter.Draw(spriteBatch);
 
             base.Draw(gameTime);
         }

@@ -46,15 +46,18 @@
   <ItemGroup>
     <Compile Include="Camera.cs" />
     <Compile Include="Commands.cs" />
+    <Compile Include="FrameCounter.cs" />
     <Compile Include="Game1.cs" />
     <Compile Include="Hexagon.cs" />
     <Compile Include="HexagonPoint.cs" />
+    <Compile Include="HexagonTests.cs" />
     <Compile Include="HexGrid.cs" />
     <Compile Include="HexMap.cs" />
     <Compile Include="HexMapMesh.cs" />
     <Compile Include="HexMapMeshSmooth.cs" />
     <Compile Include="HexMapMeshFlat.cs" />
     <Compile Include="HexMetrics.cs" />
+    <Compile Include="HexRecordTests.cs" />
     <Compile Include="Input.cs" />
     <Compile Include="MapRecord.cs" />
     <Compile Include="Point3.cs" />

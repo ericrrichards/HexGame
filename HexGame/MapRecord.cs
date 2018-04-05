@@ -6,8 +6,6 @@
 
     using Microsoft.Xna.Framework;
 
-    using NUnit.Framework;
-
     using ProtoBuf;
 
     [Serializable]
@@ -30,12 +28,14 @@
     public struct HexRecord {
         //TODO could use some tricks to smoosh the size of this down some...
         public Point MapPos {
-            get => new Point(Pos & 0xFF, Pos >> 8);
+            get => ToPoint();
             set => Pos = ToShort(value);
         }
 
-        
-        
+        public Point ToPoint() {
+            return new Point(Pos & 0xFF, Pos >> 8);
+        }
+
         [DataMember]
         [ProtoMember(1)]
         public ushort Pos { get;set; }
@@ -73,22 +73,6 @@
             }
 
             return ret.ToArray();
-        }
-    }
-
-    [TestFixture]
-    public class HexRecordTests {
-        [TestCase(new[]{0,0,0,0,0,0,0}, 35887507618889599U)]
-        [TestCase(new[]{-1,0,0,0,0,0,0}, 35887507618889598U)]
-        [TestCase(new[]{1,0,0,0,0,0,0}, 35887507618889600U)]
-        public void ToLong(int[] input, ulong expected) {
-            Assert.AreEqual(expected, HexRecord.ToLong(input));
-        }
-        [TestCase(35887507618889599U, new[]{0,0,0,0,0,0,0})]
-        [TestCase(35887507618889600U, new[]{1,0,0,0,0,0,0})]
-        [TestCase(35887507618889598U, new[]{-1,0,0,0,0,0,0})]
-        public void ToIntArray(ulong input, int[] expected) {
-            Assert.AreEqual(expected, HexRecord.ToIntArray(input));
         }
     }
 }
