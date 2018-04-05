@@ -1,12 +1,16 @@
 ﻿namespace HexGame {
     using System;
     using System.Collections.Generic;
+    using System.IO;
     using System.Linq;
 
     using JetBrains.Annotations;
 
     using Microsoft.Xna.Framework;
+    using Microsoft.Xna.Framework.Content;
     using Microsoft.Xna.Framework.Graphics;
+
+    using Newtonsoft.Json;
 
     public enum MeshType {
         Smooth,
@@ -17,16 +21,15 @@
         public int Width { get; }
         public int Height { get; }
 
-        
 
-        public float HexSize { get; }
+
+        public const float HexSize = 0.5f;
         public List<Hexagon> Hexes { get; }
 
 
         private const int PatchSize = 10;
         private List<HexMapMesh> Meshes { get; set; }
         private HashSet<int> DirtyPatches { get; } = new HashSet<int>();
-        //private HexGrid HexGrid { get; set; }
 
 
         public bool ShowCoords { get; set; }
@@ -39,18 +42,18 @@
         private readonly SpriteFont _font;
 
         private const float HeightStep = 0.25f;
-        public Texture2D Texture { get; set; }
+        public Texture2D Texture { get; }
         
 
-        public HexMap(GraphicsDevice gd, int width, int height, Texture2D texture, SpriteFont font = null, MeshType meshType=MeshType.Smooth) {
+        public HexMap(GraphicsDevice gd, int width, int height, Texture2D texture, SpriteFont font = null, MeshType meshType=MeshType.Flat) {
             _font = font;
-            HexSize = 0.5f;
             Width = width;
             Height = height;
             Hexes = new List<Hexagon>();
             MeshType = meshType;
 
             Texture = texture;
+            
             var hexHeight = HexMetrics.Height(HexSize);
             for (var x = 0; x < Width; x++) {
                 for (var y = 0; y < Height; y++) {
@@ -70,6 +73,37 @@
 
             Rebuild(gd, true);
 
+        }
+
+        private HexMap(GraphicsDevice gd, MapRecord record, ContentManager content, SpriteFont font=null) {
+            _font = font;
+            Width = record.Size.X;
+            Height = record.Size.Y;
+            Hexes = new List<Hexagon>();
+            MeshType = MeshType.Flat;
+            Texture = content.Load<Texture2D>(record.BaseTexture);
+            var hexHeight = HexMetrics.Height(HexSize);
+            for (var x = 0; x < Width; x++) {
+                for (var y = 0; y < Height; y++) {
+                    var mapPos = new Point(x, y);
+                    var position = GetHexCenter(x, y, hexHeight);
+                    var hexRecord = record.Hexes.First(h => h.MapPos == mapPos);
+
+
+                    var hexagon = new Hexagon(position, HexSize, hexRecord, HeightStep) {
+                        MapPos = mapPos
+                    };
+                    Hexes.Add(hexagon);
+                }
+            }
+            foreach (var hexagon in Hexes) {
+                foreach (HexDirection dir in Enum.GetValues(typeof(HexDirection))) {
+                    hexagon.Neighbors[dir] = GetHex(HexMetrics.GetNeighborCoords(hexagon.MapPos, dir));
+                }
+                
+            }
+
+            Rebuild(gd, true);
         }
 
         private Vector3 GetHexCenter(int x, int y, float hexHeight) {
@@ -236,5 +270,24 @@
             RaiseVertex(vertex, -HeightStep);
         }
 
+        public void SaveToFile(string filename) {
+            var record = new MapRecord {
+                Name = Path.GetFileNameWithoutExtension(filename),
+                Size = new Point(Width, Height),
+                BaseTexture = Texture.Name,
+                Hexes = Hexes.Select(h => new HexRecord(h, HeightStep)).ToArray()
+            };
+
+            File.WriteAllText(filename, JsonConvert.SerializeObject(record));
+        }
+
+        public static HexMap LoadFromFile(string filename, GraphicsDevice gd, ContentManager content, SpriteFont font=null) {
+            var data = File.ReadAllText(filename);
+            var record = JsonConvert.DeserializeObject<MapRecord>(data);
+            return new HexMap(gd, record, content, font);
+        }
+
     }
+
+    
 }

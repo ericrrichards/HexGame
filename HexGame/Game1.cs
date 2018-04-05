@@ -5,7 +5,9 @@ using Microsoft.Xna.Framework.Input;
 namespace HexGame {
     using System;
     using System.Collections.Generic;
+    using System.Windows.Forms;
 
+    using Keys = Keys;
 
     /// <summary>
     /// This is the main type for your game.
@@ -69,7 +71,10 @@ namespace HexGame {
                 [Commands.ToggleHexGrid] = new List<Keys> { Keys.G },
                 [Commands.ToggleWireframe] = new List<Keys> { Keys.W },
                 [Commands.TogglePickMode] = new List<Keys> { Keys.P },
-                [Commands.ToggleHexHeights] = new List<Keys>{Keys.H}
+                [Commands.ToggleHexHeights] = new List<Keys>{Keys.H},
+
+                [Commands.SaveMap] = new List<Keys>{Keys.S},
+                [Commands.LoadMap] = new List<Keys>{Keys.L}
             };
 
             Input.AddBindings(bindings);
@@ -79,9 +84,7 @@ namespace HexGame {
             Camera.SetLens(MathHelper.ToRadians(45), GraphicsDevice.DisplayMode.AspectRatio, .01f, 1000f);
             Camera.LookAt(new Vector3(0, 10, 1), Vector3.Zero, Vector3.Up);
 
-            BasicEffect = new BasicEffect(GraphicsDevice) {
-                //VertexColorEnabled = true,
-            };
+            BasicEffect = new BasicEffect(GraphicsDevice);
 
 
 
@@ -145,6 +148,19 @@ namespace HexGame {
             if (Input.IsPressed(Commands.ToggleHexHeights)) {
                 Map.ShowHexHeights = !Map.ShowHexHeights;
             }
+            if (Input.IsPressed(Commands.SaveMap)) {
+                var saveFileDialog = new SaveFileDialog{ DefaultExt = "map", Filter = "Map files|*.map", Title = "Save Map"};
+                if (saveFileDialog.ShowDialog() == DialogResult.OK) {
+                    Map.SaveToFile(saveFileDialog.FileName);
+                }
+            }
+            if (Input.IsPressed(Commands.LoadMap)) {
+                var loadFileDialog = new OpenFileDialog { DefaultExt = "map", Filter = "Map files|*.map", Title = "Load Map"};
+                if (loadFileDialog.ShowDialog() == DialogResult.OK) {
+                    Map = HexMap.LoadFromFile(loadFileDialog.FileName, GraphicsDevice, Content, _font);
+                }
+            }
+
 
             DisplayText = "Over: ";
 
@@ -199,7 +215,7 @@ namespace HexGame {
             DrawDebugText();
 
             spriteBatch.Begin();
-            spriteBatch.DrawString(_font, $"FPS {_fps.ToString("F1")}", new Vector2(0, 20), Color.White  );
+            spriteBatch.DrawString(_font, $"FPS {_fps:F1}", new Vector2(0, 20), Color.White  );
             spriteBatch.End();
 
             base.Draw(gameTime);

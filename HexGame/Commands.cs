@@ -18,5 +18,8 @@
         public const string ToggleWireframe = "ToggleWireframe";
         public const string TogglePickMode = "TogglePickMode";
         public const string ToggleHexHeights = "ToggleHexHeights";
+
+        public const string SaveMap = "SaveMap";
+        public const string LoadMap = "LoadMap";
     }
 }

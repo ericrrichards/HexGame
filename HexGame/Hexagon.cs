@@ -1,13 +1,15 @@
 ﻿namespace HexGame {
     using System;
     using System.Collections.Generic;
-    using System.Collections.ObjectModel;
     using System.Diagnostics;
     using System.Linq;
 
     using Microsoft.Xna.Framework;
 
     using NUnit.Framework;
+
+    
+
 
     [DebuggerDisplay("{" + nameof(DebugDisplayString) + ",nq}")]
     public class Hexagon {
@@ -29,6 +31,20 @@
             Position = position;
 
             Points = HexMetrics.PointOrder.ToDictionary(p => p, p => HexMetrics.GetPoint(p, Position, HexWidth));
+            BuildBounds();
+        }
+
+        public Hexagon(Vector3 position, float hexWidth, HexRecord hexRecord, float heightStep) {
+            PatchID = -1;
+            HexWidth = hexWidth;
+            Position = position;
+
+            Points = HexMetrics.PointOrder.ToDictionary(p => p, p => HexMetrics.GetPoint(p, Position, HexWidth));
+            for (var i = 0; i < hexRecord.Heights.Length; i++) {
+                var point = Points[(HexagonPoint)i];
+                point.Y = hexRecord.Heights[i] * heightStep;
+                Points[(HexagonPoint)i] = point;
+            }
             BuildBounds();
         }
 
