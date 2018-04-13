@@ -7,6 +7,8 @@ namespace HexGame {
     using System.IO;
     using System.Windows.Forms;
 
+    using GeonBit.UI;
+
     using Keys = Keys;
 
     /// <summary>
@@ -34,7 +36,7 @@ namespace HexGame {
             //graphics.SynchronizeWithVerticalRetrace = false;
             //IsFixedTimeStep = false;
             Content.RootDirectory = "Content";
-            IsMouseVisible = true;
+            
             
         }
 
@@ -47,7 +49,7 @@ namespace HexGame {
         protected override void Initialize() {
             // TODO: Add your initialization logic here
 
-            base.Initialize();
+            
             
             Input = new Input();
 
@@ -85,7 +87,9 @@ namespace HexGame {
             BasicEffect = new BasicEffect(GraphicsDevice);
 
 
+            UserInterface.Initialize(Content, BuiltinThemes.hd);
 
+            base.Initialize();
         }
 
 
@@ -124,7 +128,9 @@ namespace HexGame {
         protected override void Update(GameTime gameTime) {
             FrameCounter.Update(gameTime);
 
-            Input.Update();
+            UserInterface.Active.Update(gameTime);
+
+            Input.Update(gameTime);
 
             if (Input.IsDown(Commands.GameExit)) {
                 Exit();
@@ -180,8 +186,15 @@ namespace HexGame {
                 if (vertex != null) {
                     DisplayText = "Over: " + vertex;
                     var mapDirty = false;
-                    if (Input.MouseDown(true)) {
+                    if (Input.MouseClicked(true)) {
                         Map.RaiseVertex(vertex.Value);
+                        mapDirty = true;
+                    }
+                    else if (Input.MouseDown(true)) {
+                        Map.RaiseVertex(vertex.Value);
+                        mapDirty = true;
+                    } else if (Input.MouseClicked(false)) {
+                        Map.LowerVertex(vertex.Value);
                         mapDirty = true;
                     } else if (Input.MouseDown(false)) {
                         Map.LowerVertex(vertex.Value);
@@ -223,6 +236,8 @@ namespace HexGame {
             DrawDebugText();
 
             FrameCounter.Draw(spriteBatch);
+
+            UserInterface.Active.Draw(spriteBatch);
 
             base.Draw(gameTime);
         }
