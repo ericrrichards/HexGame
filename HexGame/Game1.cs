@@ -8,6 +8,7 @@ namespace HexGame {
     using System.Windows.Forms;
 
     using GeonBit.UI;
+    using GeonBit.UI.Entities;
 
     using Keys = Keys;
 
@@ -32,7 +33,9 @@ namespace HexGame {
         private FrameCounter FrameCounter { get; set; }
 
         public Game1() {
-            graphics = new GraphicsDeviceManager(this);
+            graphics = new GraphicsDeviceManager(this){PreferredBackBufferWidth = 1600, PreferredBackBufferHeight = 900};
+            
+            
             //graphics.SynchronizeWithVerticalRetrace = false;
             //IsFixedTimeStep = false;
             Content.RootDirectory = "Content";
@@ -87,7 +90,9 @@ namespace HexGame {
             BasicEffect = new BasicEffect(GraphicsDevice);
 
 
-            UserInterface.Initialize(Content, BuiltinThemes.hd);
+            UserInterface.Initialize(Content);
+            
+            
 
             base.Initialize();
         }
