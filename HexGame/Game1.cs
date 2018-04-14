@@ -13,6 +13,8 @@ namespace HexGame {
     using GeonBit.UI.Entities;
     using GeonBit.UI.Utils;
 
+    using HexGame.UI;
+
     using Keys = Keys;
 
     /// <summary>
@@ -25,6 +27,7 @@ namespace HexGame {
         private Panel _settingsPanel;
         private Panel _saveDialog;
         private Panel _loadDialog;
+        private SettingsMenu _settingsMenu;
 
         // Camera
         private Camera Camera { get; set; }
@@ -34,7 +37,7 @@ namespace HexGame {
         private BasicEffect BasicEffect { get; set; }
 
         private HexMap Map { get; set; }
-        private string DisplayText { get; set; }
+        private string DisplayText { get; set; } = string.Empty;
 
         private FrameCounter FrameCounter { get; set; }
 
@@ -100,102 +103,21 @@ namespace HexGame {
 
             UserInterface.Initialize(Content);
 
-            _settingsPanel = new Panel(new Vector2(0.5f, 0.5f), PanelSkin.Simple) {
-                Visible = false
-            };
-            var menuHeader = new Header("Menu");
-            _settingsPanel.AddChild(menuHeader);
-            var hr = new HorizontalLine();
-            _settingsPanel.AddChild(hr);
+            _settingsMenu = new SettingsMenu(Exit, SaveMap, LoadMap);
 
-            var btnSaveMap = new Button("Save Map", ButtonSkin.Default, Anchor.AutoCenter);
-            var btnLoadMap = new Button("Load Map", ButtonSkin.Default, Anchor.AutoCenter);
-
-            var exitButton = new Button("Exit", ButtonSkin.Default, Anchor.AutoCenter);
-            exitButton.OnClick += entity => Exit();
-
-
-            _saveDialog = new Panel(new Vector2(0.5f, 0.5f), PanelSkin.Simple) {
-                Visible = false
-            };
-            var saveHeader = new Header("Save Map");
-            _saveDialog.AddChild(saveHeader);
-            hr = new HorizontalLine();
-            _saveDialog.AddChild(hr);
-            var saveInput = new TextInput(false, Anchor.AutoCenter);
-            _saveDialog.AddChild(saveInput);
-            var cancelButton = new Button("Cancel", ButtonSkin.Default, Anchor.BottomLeft, new Vector2(0.5f, -1));
-            cancelButton.OnClick += entity => _saveDialog.Visible = false;
-            _saveDialog.AddChild(cancelButton);
-            var saveButton = new Button("Save", ButtonSkin.Default, Anchor.BottomRight, new Vector2(0.5f, -1));
-            saveButton.OnClick += entity => SaveMap(saveInput.Value, _saveDialog);
-            _saveDialog.AddChild(saveButton);
-            btnSaveMap.OnClick += entity => {
-                _saveDialog.Visible = true;
-                _settingsPanel.Visible = false;
-            };
-
-            _loadDialog = new Panel(new Vector2(0.5f, 0.5f), PanelSkin.Simple, Anchor.AutoCenter) {
-                Visible = false
-            };
-            var loadHeader = new Header("Load Map", Anchor.AutoCenter);
-            _loadDialog.AddChild(loadHeader);
-            hr = new HorizontalLine();
-            _loadDialog.AddChild(hr);
-            var loadListBox = new SelectList(new Vector2(-1, -1), Anchor.AutoCenter, null, PanelSkin.Simple);
-            foreach (var mapFile in Directory.GetFiles(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "HexGame"), "*.mapp")) {
-                loadListBox.AddItem(Path.GetFileNameWithoutExtension(mapFile));
-            }
-            _loadDialog.AddChild(loadListBox);
-
-            cancelButton = new Button("Cancel", ButtonSkin.Default, Anchor.BottomLeft, new Vector2(0.5f, -1));
-            cancelButton.OnClick += entity => _loadDialog.Visible = false;
-            _loadDialog.AddChild(cancelButton);
-            var loadButton = new Button("Load", ButtonSkin.Default, Anchor.BottomRight, new Vector2(0.5f, -1));
-            loadButton.OnClick += entity => LoadMap(loadListBox.SelectedValue, _loadDialog);
-            _loadDialog.AddChild(loadButton);
-
-            btnSaveMap.OnClick += entity => {
-                _saveDialog.Visible = true;
-                _settingsPanel.Visible = false;
-            };
-
-            btnLoadMap.OnClick += entity => {
-                _loadDialog.Visible = true;
-                _settingsPanel.Visible = false;
-            };
-
-
-            _settingsPanel.AddChild(btnSaveMap);
-            _settingsPanel.AddChild(btnLoadMap);
-            _settingsPanel.AddChild(exitButton);
-
-
-
-
-
-            UserInterface.Active.AddEntity(_saveDialog);
-            UserInterface.Active.AddEntity(_loadDialog);
-
-            UserInterface.Active.AddEntity(_settingsPanel);
 
 
             base.Initialize();
         }
 
-        private void LoadMap(string filename, Entity parent) {
-            Task.Run(() => {
-                var newMap = HexMap.LoadFromFileProto(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "HexGame", filename + ".mapp"), GraphicsDevice, Content, _font);
-                Map = newMap;
-                MessageBox.ShowMsgBox("Map Loaded", $"Map \"{filename}\" Loaded", new[] { new MessageBox.MsgBoxOption("OK", () => true) }, null, null, () => parent.Visible = false);
-
-            });
+        private void LoadMap(string filename) {
+            var newMap = HexMap.LoadFromFileProto(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "HexGame", filename + ".mapp"), GraphicsDevice, Content, _font);
+            Map = newMap;
 
         }
 
-        private void SaveMap(string filename, Entity parent) {
+        private void SaveMap(string filename) {
             Map.SaveToFileProto(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "HexGame", filename + ".mapp"));
-            MessageBox.ShowMsgBox("Map Saved", $"Map \"{filename}\" saved", new[] { new MessageBox.MsgBoxOption("OK", () => true) }, null, null, () => parent.Visible = false);
         }
 
         /// <summary>
@@ -233,7 +155,7 @@ namespace HexGame {
             UserInterface.Active.Update(gameTime);
 
             Input.Update(gameTime);
-            if (!_settingsPanel.IsVisible() && !_saveDialog.IsVisible() && !_loadDialog.IsVisible()) {
+            if (!_settingsMenu.IsActive) {
 
 
                 if (Input.IsDown(Commands.GameExit)) {
@@ -253,7 +175,7 @@ namespace HexGame {
                 }
 
                 if (Input.IsPressed(Commands.OpenMenu)) {
-                    _settingsPanel.Visible = !_settingsPanel.IsVisible();
+                    _settingsMenu.Show();
                 }
 
                 DisplayText = "Over: ";
@@ -287,9 +209,10 @@ namespace HexGame {
 
 
                 }
+                Camera.Update(gameTime);
             }
 
-            Camera.Update(gameTime);
+            
 
             // TODO: Add your update logic here
 
