@@ -21,5 +21,7 @@
 
         public const string SaveMap = "SaveMap";
         public const string LoadMap = "LoadMap";
+
+        public const string OpenMenu = "OpenMenu";
     }
 }

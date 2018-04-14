@@ -3,12 +3,15 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
 namespace HexGame {
+    using System;
     using System.Collections.Generic;
     using System.IO;
-    using System.Windows.Forms;
+    using System.Threading.Tasks;
+    //using System.Windows.Forms;
 
     using GeonBit.UI;
     using GeonBit.UI.Entities;
+    using GeonBit.UI.Utils;
 
     using Keys = Keys;
 
@@ -19,6 +22,9 @@ namespace HexGame {
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
         private SpriteFont _font;
+        private Panel _settingsPanel;
+        private Panel _saveDialog;
+        private Panel _loadDialog;
 
         // Camera
         private Camera Camera { get; set; }
@@ -33,14 +39,16 @@ namespace HexGame {
         private FrameCounter FrameCounter { get; set; }
 
         public Game1() {
-            graphics = new GraphicsDeviceManager(this){PreferredBackBufferWidth = 1600, PreferredBackBufferHeight = 900};
-            
-            
+            graphics = new GraphicsDeviceManager(this) { PreferredBackBufferWidth = 1600, PreferredBackBufferHeight = 900 };
+            if (!Directory.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "HexGame"))) {
+                Directory.CreateDirectory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "HexGame"));
+            }
+
             //graphics.SynchronizeWithVerticalRetrace = false;
             //IsFixedTimeStep = false;
             Content.RootDirectory = "Content";
-            
-            
+
+
         }
 
         /// <summary>
@@ -52,8 +60,8 @@ namespace HexGame {
         protected override void Initialize() {
             // TODO: Add your initialization logic here
 
-            
-            
+
+
             Input = new Input();
 
             var bindings = new Dictionary<string, List<Keys>> {
@@ -68,16 +76,16 @@ namespace HexGame {
                 [Commands.CameraOrbitDown] = new List<Keys> { Keys.End },
                 [Commands.CameraOrbitUp] = new List<Keys> { Keys.Home },
 
-                [Commands.GameExit] = new List<Keys> { Keys.Escape },
+                [Commands.OpenMenu] = new List<Keys> { Keys.Escape },
 
                 [Commands.ToggleHexCoordinates] = new List<Keys> { Keys.C },
                 [Commands.ToggleHexGrid] = new List<Keys> { Keys.G },
                 [Commands.ToggleWireframe] = new List<Keys> { Keys.W },
                 [Commands.TogglePickMode] = new List<Keys> { Keys.P },
-                [Commands.ToggleHexHeights] = new List<Keys>{Keys.H},
+                [Commands.ToggleHexHeights] = new List<Keys> { Keys.H },
 
-                [Commands.SaveMap] = new List<Keys>{Keys.S},
-                [Commands.LoadMap] = new List<Keys>{Keys.L}
+                [Commands.SaveMap] = new List<Keys> { Keys.S },
+                [Commands.LoadMap] = new List<Keys> { Keys.L }
             };
 
             Input.AddBindings(bindings);
@@ -91,15 +99,104 @@ namespace HexGame {
 
 
             UserInterface.Initialize(Content);
-            
-            
+
+            _settingsPanel = new Panel(new Vector2(0.5f, 0.5f), PanelSkin.Simple) {
+                Visible = false
+            };
+            var menuHeader = new Header("Menu");
+            _settingsPanel.AddChild(menuHeader);
+            var hr = new HorizontalLine();
+            _settingsPanel.AddChild(hr);
+
+            var btnSaveMap = new Button("Save Map", ButtonSkin.Default, Anchor.AutoCenter);
+            var btnLoadMap = new Button("Load Map", ButtonSkin.Default, Anchor.AutoCenter);
+
+            var exitButton = new Button("Exit", ButtonSkin.Default, Anchor.AutoCenter);
+            exitButton.OnClick += entity => Exit();
+
+
+            _saveDialog = new Panel(new Vector2(0.5f, 0.5f), PanelSkin.Simple) {
+                Visible = false
+            };
+            var saveHeader = new Header("Save Map");
+            _saveDialog.AddChild(saveHeader);
+            hr = new HorizontalLine();
+            _saveDialog.AddChild(hr);
+            var saveInput = new TextInput(false, Anchor.AutoCenter);
+            _saveDialog.AddChild(saveInput);
+            var cancelButton = new Button("Cancel", ButtonSkin.Default, Anchor.BottomLeft, new Vector2(0.5f, -1));
+            cancelButton.OnClick += entity => _saveDialog.Visible = false;
+            _saveDialog.AddChild(cancelButton);
+            var saveButton = new Button("Save", ButtonSkin.Default, Anchor.BottomRight, new Vector2(0.5f, -1));
+            saveButton.OnClick += entity => SaveMap(saveInput.Value, _saveDialog);
+            _saveDialog.AddChild(saveButton);
+            btnSaveMap.OnClick += entity => {
+                _saveDialog.Visible = true;
+                _settingsPanel.Visible = false;
+            };
+
+            _loadDialog = new Panel(new Vector2(0.5f, 0.5f), PanelSkin.Simple, Anchor.AutoCenter) {
+                Visible = false
+            };
+            var loadHeader = new Header("Load Map", Anchor.AutoCenter);
+            _loadDialog.AddChild(loadHeader);
+            hr = new HorizontalLine();
+            _loadDialog.AddChild(hr);
+            var loadListBox = new SelectList(new Vector2(-1, -1), Anchor.AutoCenter, null, PanelSkin.Simple);
+            foreach (var mapFile in Directory.GetFiles(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "HexGame"), "*.mapp")) {
+                loadListBox.AddItem(Path.GetFileNameWithoutExtension(mapFile));
+            }
+            _loadDialog.AddChild(loadListBox);
+
+            cancelButton = new Button("Cancel", ButtonSkin.Default, Anchor.BottomLeft, new Vector2(0.5f, -1));
+            cancelButton.OnClick += entity => _loadDialog.Visible = false;
+            _loadDialog.AddChild(cancelButton);
+            var loadButton = new Button("Load", ButtonSkin.Default, Anchor.BottomRight, new Vector2(0.5f, -1));
+            loadButton.OnClick += entity => LoadMap(loadListBox.SelectedValue, _loadDialog);
+            _loadDialog.AddChild(loadButton);
+
+            btnSaveMap.OnClick += entity => {
+                _saveDialog.Visible = true;
+                _settingsPanel.Visible = false;
+            };
+
+            btnLoadMap.OnClick += entity => {
+                _loadDialog.Visible = true;
+                _settingsPanel.Visible = false;
+            };
+
+
+            _settingsPanel.AddChild(btnSaveMap);
+            _settingsPanel.AddChild(btnLoadMap);
+            _settingsPanel.AddChild(exitButton);
+
+
+
+
+
+            UserInterface.Active.AddEntity(_saveDialog);
+            UserInterface.Active.AddEntity(_loadDialog);
+
+            UserInterface.Active.AddEntity(_settingsPanel);
+
 
             base.Initialize();
         }
 
+        private void LoadMap(string filename, Entity parent) {
+            Task.Run(() => {
+                var newMap = HexMap.LoadFromFileProto(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "HexGame", filename + ".mapp"), GraphicsDevice, Content, _font);
+                Map = newMap;
+                MessageBox.ShowMsgBox("Map Loaded", $"Map \"{filename}\" Loaded", new[] { new MessageBox.MsgBoxOption("OK", () => true) }, null, null, () => parent.Visible = false);
 
+            });
 
+        }
 
+        private void SaveMap(string filename, Entity parent) {
+            Map.SaveToFileProto(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "HexGame", filename + ".mapp"));
+            MessageBox.ShowMsgBox("Map Saved", $"Map \"{filename}\" saved", new[] { new MessageBox.MsgBoxOption("OK", () => true) }, null, null, () => parent.Visible = false);
+        }
 
         /// <summary>
         /// LoadContent will be called once per game and is the place to load
@@ -110,7 +207,7 @@ namespace HexGame {
             spriteBatch = new SpriteBatch(GraphicsDevice);
             _font = Content.Load<SpriteFont>("default");
             var texture = Content.Load<Texture2D>("Dry Grass 2");
-            Map = new HexMap(GraphicsDevice, 100, 100,texture, _font, MeshType.Flat );
+            Map = new HexMap(GraphicsDevice, 100, 100, texture, _font);
             FrameCounter = new FrameCounter(_font);
 
 
@@ -136,83 +233,61 @@ namespace HexGame {
             UserInterface.Active.Update(gameTime);
 
             Input.Update(gameTime);
+            if (!_settingsPanel.IsVisible() && !_saveDialog.IsVisible() && !_loadDialog.IsVisible()) {
 
-            if (Input.IsDown(Commands.GameExit)) {
-                Exit();
-            }
-            if (Input.IsPressed(Commands.ToggleHexCoordinates)) {
-                Map.ShowCoords = !Map.ShowCoords;
-            }
-            if (Input.IsPressed(Commands.ToggleHexGrid)) {
-                Map.ShowGrid = !Map.ShowGrid;
-            }
-            if (Input.IsPressed(Commands.ToggleWireframe)) {
-                Map.Wireframe = !Map.Wireframe;
-            }
-            if (Input.IsPressed(Commands.ToggleHexHeights)) {
-                Map.ShowHexHeights = !Map.ShowHexHeights;
-            }
-            if (Input.IsPressed(Commands.SaveMap)) {
-                var saveFileDialog = new SaveFileDialog{ DefaultExt = ".map", Filter = "Map files|*.map|Binary Map|*.mapb|Proto Map|*.mapp", Title = "Save Map"};
-                if (saveFileDialog.ShowDialog() == DialogResult.OK) {
-                    var extension = Path.GetExtension(saveFileDialog.FileName);
-                    if (extension == ".map") {
-                        Map.SaveToFile(saveFileDialog.FileName);
-                    } else if (extension == ".mapb") {
-                        Map.SaveToFileBinary(saveFileDialog.FileName);
-                    } else if (extension == ".mapp") {
-                        Map.SaveToFileProto(saveFileDialog.FileName);
-                    }
+
+                if (Input.IsDown(Commands.GameExit)) {
+                    Exit();
                 }
-            }
-            if (Input.IsPressed(Commands.LoadMap)) {
-                var loadFileDialog = new OpenFileDialog { DefaultExt = "map", Filter = "Map files|*.map|Binary Map|*.mapb|Proto Map|*.mapp", Title = "Load Map"};
-                if (loadFileDialog.ShowDialog() == DialogResult.OK) {
-                    var extension = Path.GetExtension(loadFileDialog.FileName);
-                    if (extension == ".map") {
-                        Map = HexMap.LoadFromFile(loadFileDialog.FileName, GraphicsDevice, Content, _font);
-                    } else if (extension == ".mapb") {
-                        Map = HexMap.LoadFromFileBinary(loadFileDialog.FileName, GraphicsDevice, Content, _font);
-                    } else if (extension == ".mapp") {
-                        Map = HexMap.LoadFromFileProto(loadFileDialog.FileName, GraphicsDevice, Content, _font);
-                    }
+                if (Input.IsPressed(Commands.ToggleHexCoordinates)) {
+                    Map.ShowCoords = !Map.ShowCoords;
                 }
-            }
-
-
-            DisplayText = "Over: ";
-
-            var mouse = Mouse.GetState();
-            var mouseLoc = mouse.Position.ToVector2();
-            var viewPort = GraphicsDevice.Viewport;
-            if (viewPort.Bounds.Contains(mouseLoc)) {
-                var ray = Camera.CalculateRay(mouseLoc, viewPort);
-                var vertex = Map.PickVertex(ray);
-                if (vertex != null) {
-                    DisplayText = "Over: " + vertex;
-                    var mapDirty = false;
-                    if (Input.MouseClicked(true)) {
-                        Map.RaiseVertex(vertex.Value);
-                        mapDirty = true;
-                    }
-                    else if (Input.MouseDown(true)) {
-                        Map.RaiseVertex(vertex.Value);
-                        mapDirty = true;
-                    } else if (Input.MouseClicked(false)) {
-                        Map.LowerVertex(vertex.Value);
-                        mapDirty = true;
-                    } else if (Input.MouseDown(false)) {
-                        Map.LowerVertex(vertex.Value);
-                        mapDirty = true;
-                    }
-                    if (mapDirty) {
-                        Map.Rebuild(GraphicsDevice);
-                    }
+                if (Input.IsPressed(Commands.ToggleHexGrid)) {
+                    Map.ShowGrid = !Map.ShowGrid;
+                }
+                if (Input.IsPressed(Commands.ToggleWireframe)) {
+                    Map.Wireframe = !Map.Wireframe;
+                }
+                if (Input.IsPressed(Commands.ToggleHexHeights)) {
+                    Map.ShowHexHeights = !Map.ShowHexHeights;
                 }
 
+                if (Input.IsPressed(Commands.OpenMenu)) {
+                    _settingsPanel.Visible = !_settingsPanel.IsVisible();
+                }
 
+                DisplayText = "Over: ";
+
+                var mouse = Mouse.GetState();
+                var mouseLoc = mouse.Position.ToVector2();
+                var viewPort = GraphicsDevice.Viewport;
+                if (viewPort.Bounds.Contains(mouseLoc)) {
+                    var ray = Camera.CalculateRay(mouseLoc, viewPort);
+                    var vertex = Map.PickVertex(ray);
+                    if (vertex != null) {
+                        DisplayText = "Over: " + vertex;
+                        var mapDirty = false;
+                        if (Input.MouseClicked(true)) {
+                            Map.RaiseVertex(vertex.Value);
+                            mapDirty = true;
+                        } else if (Input.MouseDown(true)) {
+                            Map.RaiseVertex(vertex.Value);
+                            mapDirty = true;
+                        } else if (Input.MouseClicked(false)) {
+                            Map.LowerVertex(vertex.Value);
+                            mapDirty = true;
+                        } else if (Input.MouseDown(false)) {
+                            Map.LowerVertex(vertex.Value);
+                            mapDirty = true;
+                        }
+                        if (mapDirty) {
+                            Map.Rebuild(GraphicsDevice);
+                        }
+                    }
+
+
+                }
             }
-
 
             Camera.Update(gameTime);
 
@@ -227,7 +302,7 @@ namespace HexGame {
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime) {
             FrameCounter.CountFrame();
-            
+
 
             BasicEffect.Projection = Camera.ProjectionMatrix;
             BasicEffect.View = Camera.ViewMatrix;
