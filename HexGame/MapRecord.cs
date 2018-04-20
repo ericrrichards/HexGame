@@ -26,7 +26,6 @@
     [DataContract]
     [ProtoContract]
     public struct HexRecord {
-        //TODO could use some tricks to smoosh the size of this down some...
         public Point MapPos {
             get => ToPoint();
             set => Pos = ToShort(value);
@@ -43,6 +42,11 @@
         [ProtoMember(2)]
         public ulong H { get; set; }
 
+        [DataMember]
+        [ProtoMember(3)]
+        public byte Mod { get; set; }
+        public bool Forested => Mod == 1;
+
         public int[] Heights {
             get => ToIntArray(H);
             set => H = ToLong(value);
@@ -51,6 +55,7 @@
         public HexRecord(Hexagon hex, float heightStep = 0.25f) {
             Pos = ToShort(hex.MapPos);
             H = ToLong(hex.Points.OrderBy(kv => kv.Key).Select(kv => (int)(kv.Value.Y / heightStep)).ToArray());
+            Mod = (byte)(hex.IsForest ? 1 : 0);
         }
 
         public static ushort ToShort(Point value) {

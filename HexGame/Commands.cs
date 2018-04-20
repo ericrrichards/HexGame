@@ -16,8 +16,10 @@
         public const string ToggleHexCoordinates = "ToggleHexCoordinates";
         public const string ToggleHexGrid = "ToggleHexGrid";
         public const string ToggleWireframe = "ToggleWireframe";
-        public const string TogglePickMode = "TogglePickMode";
         public const string ToggleHexHeights = "ToggleHexHeights";
+
+        public const string CmdRaiseTerrain = "CmdRaiseTerrain";
+        public const string CmdTrees = "CmdTrees";
 
         public const string SaveMap = "SaveMap";
         public const string LoadMap = "LoadMap";

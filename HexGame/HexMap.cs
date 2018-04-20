@@ -173,7 +173,7 @@
         public void Draw(GraphicsDevice gd, BasicEffect effect, SpriteBatch spriteBatch, Camera camera) {
             foreach (var mesh in Meshes) {
                 if (camera.Frustum.Intersects(mesh.BoundingBox)) {
-                    mesh.DrawHexes(gd, effect, Wireframe);
+                    mesh.DrawHexes(gd, effect, camera, Wireframe);
                 }
             }
             
@@ -219,14 +219,20 @@
             }
             var d = float.MaxValue;
             Hexagon ret = null;
-            foreach (var hex in Hexes) {
-                var td = hex.IntersectedBy(ray);
-                if (td == null || !(td < d)) {
+
+            foreach (var mesh in Meshes) {
+                if (ray.Intersects(mesh.BoundingBox) == null) {
                     continue;
                 }
-                d = td.Value;
-                ret = hex;
+                foreach (var hex in mesh.Hexes) {
+                    var td = hex.IntersectedBy(ray);
+                    if (td == null || !(td < d)) {
+                        continue;
+                    }
+                    d = td.Value;
+                    ret = hex;
 
+                }
             }
             
             return ret;

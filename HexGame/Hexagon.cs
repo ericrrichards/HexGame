@@ -20,12 +20,15 @@
         public Dictionary<HexDirection, Hexagon> Neighbors { get; } = new Dictionary<HexDirection, Hexagon>();
         public int PatchID { get; set; }
 
+        public bool IsForest { get; set; }
+
         public Hexagon(Vector3 position, float hexWidth = 1.0f) {
             PatchID = -1;
             HexWidth = hexWidth;
             Position = position;
 
             Points = HexMetrics.PointOrder.ToDictionary(p => p, p => HexMetrics.GetPoint(p, Position, HexWidth));
+
             BuildBounds();
         }
 
@@ -41,6 +44,7 @@
                 Points[(HexagonPoint)i] = point;
             }
             Position = Points[HexagonPoint.Center];
+            IsForest = hexRecord.Forested;
             BuildBounds();
         }
 
@@ -112,6 +116,10 @@
             var comparer = new Vector3Comparer();
             var points = Border.ToList();
             return neighbor.Points.Where(np => points.Any(p => comparer.Equals(p, np.Value))).Select(np => np.Key).ToList();
+        }
+
+        public List<Vector3> GetMidPoints() {
+            return Border.Select(p => Vector3.Lerp(p, Position, 0.5f)).ToList();
         }
     }
 }

@@ -17,6 +17,13 @@ namespace HexGame {
 
     using Keys = Keys;
 
+
+    public enum EditorTools {
+        None = 0,
+        RaiseTerrain = 1,
+        Trees = 2,
+    }
+
     /// <summary>
     /// This is the main type for your game.
     /// </summary>
@@ -24,9 +31,6 @@ namespace HexGame {
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
         private SpriteFont _font;
-        private Panel _settingsPanel;
-        private Panel _saveDialog;
-        private Panel _loadDialog;
         private SettingsMenu _settingsMenu;
 
         // Camera
@@ -40,6 +44,7 @@ namespace HexGame {
         private string DisplayText { get; set; } = string.Empty;
 
         private FrameCounter FrameCounter { get; set; }
+        private EditorTools ActiveTool { get; set; }
 
         public Game1() {
             graphics = new GraphicsDeviceManager(this) { PreferredBackBufferWidth = 1600, PreferredBackBufferHeight = 900 };
@@ -84,8 +89,10 @@ namespace HexGame {
                 [Commands.ToggleHexCoordinates] = new List<Keys> { Keys.C },
                 [Commands.ToggleHexGrid] = new List<Keys> { Keys.G },
                 [Commands.ToggleWireframe] = new List<Keys> { Keys.W },
-                [Commands.TogglePickMode] = new List<Keys> { Keys.P },
                 [Commands.ToggleHexHeights] = new List<Keys> { Keys.H },
+                [Commands.CmdRaiseTerrain] = new List<Keys>{Keys.F1},
+                [Commands.CmdTrees] = new List<Keys>{Keys.F2},
+
 
                 [Commands.SaveMap] = new List<Keys> { Keys.S },
                 [Commands.LoadMap] = new List<Keys> { Keys.L }
@@ -132,7 +139,7 @@ namespace HexGame {
             Map = new HexMap(GraphicsDevice, 100, 100, texture, _font);
             FrameCounter = new FrameCounter(_font);
 
-
+            MapResources.LoadContent(Content);
             // TODO: use this.Content to load your game content here
         }
 
@@ -178,6 +185,13 @@ namespace HexGame {
                     _settingsMenu.Show();
                 }
 
+                if (Input.IsPressed(Commands.CmdRaiseTerrain)) {
+                    ActiveTool = EditorTools.RaiseTerrain;
+                }
+                if (Input.IsPressed(Commands.CmdTrees)) {
+                    ActiveTool = EditorTools.Trees;
+                }
+
                 DisplayText = "Over: ";
 
                 var mouse = Mouse.GetState();
@@ -185,28 +199,41 @@ namespace HexGame {
                 var viewPort = GraphicsDevice.Viewport;
                 if (viewPort.Bounds.Contains(mouseLoc)) {
                     var ray = Camera.CalculateRay(mouseLoc, viewPort);
-                    var vertex = Map.PickVertex(ray);
-                    if (vertex != null) {
-                        DisplayText = "Over: " + vertex;
-                        var mapDirty = false;
-                        if (Input.MouseClicked(true)) {
-                            Map.RaiseVertex(vertex.Value);
-                            mapDirty = true;
-                        } else if (Input.MouseDown(true)) {
-                            Map.RaiseVertex(vertex.Value);
-                            mapDirty = true;
-                        } else if (Input.MouseClicked(false)) {
-                            Map.LowerVertex(vertex.Value);
-                            mapDirty = true;
-                        } else if (Input.MouseDown(false)) {
-                            Map.LowerVertex(vertex.Value);
-                            mapDirty = true;
+                    if (ActiveTool == EditorTools.RaiseTerrain) {
+                        var vertex = Map.PickVertex(ray);
+                        if (vertex != null) {
+                            var mapDirty = false;
+                            if (Input.MouseClicked(true)) {
+                                Map.RaiseVertex(vertex.Value);
+                                mapDirty = true;
+                            } else if (Input.MouseDown(true)) {
+                                Map.RaiseVertex(vertex.Value);
+                                mapDirty = true;
+                            } else if (Input.MouseClicked(false)) {
+                                Map.LowerVertex(vertex.Value);
+                                mapDirty = true;
+                            } else if (Input.MouseDown(false)) {
+                                Map.LowerVertex(vertex.Value);
+                                mapDirty = true;
+                            }
+                            if (mapDirty) {
+                                Map.Rebuild(GraphicsDevice);
+                            }
                         }
-                        if (mapDirty) {
-                            Map.Rebuild(GraphicsDevice);
+                    } else if (ActiveTool == EditorTools.Trees) {
+                        var hex = Map.PickHex(ray);
+                        if (hex != null) {
+                            if (Input.MouseClicked(true)) {
+                                hex.IsForest = true;
+                            } else if (Input.MouseDown(true)) {
+                                hex.IsForest = true;
+                            } else if (Input.MouseClicked(false)) {
+                                hex.IsForest = false;
+                            } else if (Input.MouseDown(false)) {
+                                hex.IsForest = false;
+                            }
                         }
                     }
-
 
                 }
                 Camera.Update(gameTime);
@@ -235,6 +262,7 @@ namespace HexGame {
             //BasicEffect.EnableDefaultLighting();
 
             Map.Draw(GraphicsDevice, BasicEffect, spriteBatch, Camera);
+            
 
             DrawDebugText();
 
@@ -242,8 +270,13 @@ namespace HexGame {
 
             UserInterface.Active.Draw(spriteBatch);
 
+
+            
+
             base.Draw(gameTime);
         }
+
+        
 
         private void DrawDebugText() {
             spriteBatch.Begin();

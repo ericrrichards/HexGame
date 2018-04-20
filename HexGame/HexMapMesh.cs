@@ -61,7 +61,7 @@
             Grid = new HexGrid(gd, Hexes, Color.Gray);
         }
 
-        public void DrawHexes(GraphicsDevice gd, BasicEffect effect, bool wireframe=false) {
+        public void DrawHexes(GraphicsDevice gd, BasicEffect effect, Camera camera, bool wireframe = false) {
             gd.SetVertexBuffer(VertexBuffer);
             gd.Indices = IndexBuffer;
             var rs = gd.RasterizerState;
@@ -70,23 +70,39 @@
             }
 
 
-            effect.LightingEnabled = true;
-            effect.TextureEnabled = true;
+            SetupLighting(effect);
             effect.Texture = Texture;
-            effect.Alpha = 1.0f;
-            
-            effect.DirectionalLight0.Enabled = true;
-            effect.DirectionalLight0.Direction = Vector3.Normalize(new Vector3(0, -1, 1));
-            effect.DirectionalLight0.DiffuseColor = new Vector3(0.7f, 0.7f, 0.7f);
-
-            effect.AmbientLightColor = new Vector3(0.3f, 0.3f, 0.3f);
 
             foreach (var pass in effect.CurrentTechnique.Passes) {
                 pass.Apply();
                 gd.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, TriangleCount);
             }
+            var model = MapResources.GetResource<Model>("tree");
+            
+            foreach (var hex in Hexes) {
+                if (hex.IsForest) {
+                    foreach (var midPoint in hex.GetMidPoints()) {
+                        DrawModel(model, camera, midPoint);
+                    }
+                }
+            }
+
             gd.RasterizerState = rs;
         }
+
+        private void SetupLighting(BasicEffect effect) {
+            effect.LightingEnabled = true;
+            effect.TextureEnabled = true;
+            
+            effect.Alpha = 1.0f;
+
+            effect.DirectionalLight0.Enabled = true;
+            effect.DirectionalLight0.Direction = Vector3.Normalize(new Vector3(0, -1, 1));
+            effect.DirectionalLight0.DiffuseColor = new Vector3(0.7f, 0.7f, 0.7f);
+
+            effect.AmbientLightColor = new Vector3(0.3f, 0.3f, 0.3f);
+        }
+
         public Vector3? PickVertex(Ray ray, out float? distance) {
             distance = null;
             if (ray.Intersects(BoundingBox) == null) {
@@ -109,6 +125,19 @@
 
         public void DrawGrid(GraphicsDevice gd, BasicEffect effect) {
             Grid.DrawGrid(gd, effect);
+        }
+        private void DrawModel(Model model, Camera camera, Vector3 position) {
+            var transforms = new Matrix[model.Bones.Count];
+            model.CopyAbsoluteBoneTransformsTo(transforms);
+            foreach (var mesh in model.Meshes) {
+                foreach (BasicEffect effect in mesh.Effects) {
+                    SetupLighting(effect);
+                    effect.View = camera.ViewMatrix;
+                    effect.Projection = camera.ProjectionMatrix;
+                    effect.World = transforms[mesh.ParentBone.Index]* Matrix.CreateScale(0.25f) * Matrix.CreateTranslation(position);
+                }
+                mesh.Draw();
+            }
         }
     }
 }
