@@ -18,11 +18,7 @@ namespace HexGame {
     using Keys = Keys;
 
 
-    public enum EditorTools {
-        None = 0,
-        RaiseTerrain = 1,
-        Trees = 2,
-    }
+    
 
     /// <summary>
     /// This is the main type for your game.
@@ -44,7 +40,7 @@ namespace HexGame {
         private string DisplayText { get; set; } = string.Empty;
 
         private FrameCounter FrameCounter { get; set; }
-        private EditorTools ActiveTool { get; set; }
+        private MapEditorTools EditorPanel { get; set; }
 
         public Game1() {
             graphics = new GraphicsDeviceManager(this) { PreferredBackBufferWidth = 1600, PreferredBackBufferHeight = 900 };
@@ -112,7 +108,9 @@ namespace HexGame {
 
             _settingsMenu = new SettingsMenu(Exit, SaveMap, LoadMap);
 
+            EditorPanel = new MapEditorTools(Content);
 
+            UserInterface.Active.AddEntity(EditorPanel);
 
             base.Initialize();
         }
@@ -140,6 +138,8 @@ namespace HexGame {
             FrameCounter = new FrameCounter(_font);
 
             MapResources.LoadContent(Content);
+
+
             // TODO: use this.Content to load your game content here
         }
 
@@ -186,10 +186,10 @@ namespace HexGame {
                 }
 
                 if (Input.IsPressed(Commands.CmdRaiseTerrain)) {
-                    ActiveTool = EditorTools.RaiseTerrain;
+                    EditorPanel.ActiveTool = EditorTools.Elevation;
                 }
                 if (Input.IsPressed(Commands.CmdTrees)) {
-                    ActiveTool = EditorTools.Trees;
+                    EditorPanel.ActiveTool = EditorTools.Trees;
                 }
 
                 DisplayText = "Over: ";
@@ -199,7 +199,7 @@ namespace HexGame {
                 var viewPort = GraphicsDevice.Viewport;
                 if (viewPort.Bounds.Contains(mouseLoc)) {
                     var ray = Camera.CalculateRay(mouseLoc, viewPort);
-                    if (ActiveTool == EditorTools.RaiseTerrain) {
+                    if (EditorPanel.ActiveTool == EditorTools.Elevation) {
                         var vertex = Map.PickVertex(ray);
                         if (vertex != null) {
                             var mapDirty = false;
@@ -220,7 +220,7 @@ namespace HexGame {
                                 Map.Rebuild(GraphicsDevice);
                             }
                         }
-                    } else if (ActiveTool == EditorTools.Trees) {
+                    } else if (EditorPanel.ActiveTool == EditorTools.Trees) {
                         var hex = Map.PickHex(ray);
                         if (hex != null) {
                             if (Input.MouseClicked(true)) {

@@ -119,7 +119,7 @@
         }
 
         public List<Vector3> GetMidPoints() {
-            return Border.Select(p => Vector3.Lerp(p, Position, 0.5f)).ToList();
+            return Border.Select(p => Vector3.Lerp(p, Position, 0.5f)).Union(new []{Position}).ToList();
         }
     }
 }

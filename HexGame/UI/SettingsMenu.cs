@@ -38,6 +38,8 @@ namespace HexGame.UI {
             Panel.AddChild(btnSaveMap);
             Panel.AddChild(btnLoadMap);
             Panel.AddChild(exitButton);
+
         }
     }
+    
 }

@@ -67,6 +67,7 @@
     <Compile Include="RayExtensions.cs" />
     <Compile Include="Triangle.cs" />
     <Compile Include="UI\LoadFilePopUp.cs" />
+    <Compile Include="UI\MapEditorTools.cs" />
     <Compile Include="UI\PopUpMenu.cs" />
     <Compile Include="UI\SaveFilePopUp.cs" />
     <Compile Include="UI\SettingsMenu.cs" />
