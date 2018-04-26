@@ -19,6 +19,9 @@
             foreach (var mapFile in Directory.GetFiles(directory, extension)) {
                 _loadListBox.AddItem(Path.GetFileNameWithoutExtension(mapFile));
             }
+            if (!_loadListBox.Empty) {
+                _loadListBox.SelectedIndex = 0;
+            }
             Panel.AddChild(_loadListBox);
 
             var cancelButton = new Button("Cancel", ButtonSkin.Default, Anchor.BottomLeft, new Vector2(0.5f, -1));

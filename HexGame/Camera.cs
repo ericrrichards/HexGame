@@ -70,6 +70,7 @@
 
             var sideRadius = _radius * (float)Math.Cos(_beta);
             _alpha = (float)Math.Acos((pos.X - target.X) / sideRadius);
+            UpdateViewMatrix();
 
         }
         public void SetLens(float fovY, float aspect, float zn, float zf) {

@@ -30,6 +30,10 @@
             Panel.AddChild(cancelButton);
             var saveButton = new Button("Save", ButtonSkin.Default, Anchor.BottomRight, new Vector2(0.5f, -1));
             saveButton.OnClick += entity => {
+                if (string.IsNullOrEmpty(_saveInput.Value)) {
+                    MessageBox.ShowMsgBox("Blank Filename!", "You must enter a filename");
+                    return;
+                }
                 save?.Invoke(_saveInput.Value);
                 MessageBox.ShowMsgBox("Map Saved", $"Map \"{_saveInput.Value}\" saved", new[] { new MessageBox.MsgBoxOption("OK", () => true) }, null, null, () => Hide());
 

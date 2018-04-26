@@ -13,7 +13,6 @@
         protected PopUpMenu Parent { get; private set; }
         public bool IsActive => Panel.IsVisible() || ChildMenus.Any(m=>m.IsActive);
         private readonly UserInterface _root;
-        private UserInterface _previousInterface;
 
         protected PopUpMenu(string header, Vector2? size=null) {
             _root = new UserInterface();
@@ -31,14 +30,13 @@
         }
 
         public virtual void Show() {
-            _previousInterface = UserInterface.Active;
+            InterfaceStack.PushInterface(_root);
             Panel.Visible = true;
-            UserInterface.Active = _root;
         }
 
         public virtual void Hide() {
+            InterfaceStack.PopInterface();
             Panel.Visible = false;
-            UserInterface.Active = _previousInterface;
         }
 
         public void AddChildMenu(PopUpMenu child) {

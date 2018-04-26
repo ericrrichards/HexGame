@@ -11,14 +11,17 @@ namespace HexGame.UI {
 
         public SettingsMenu(Action exit=null, Action<string>save=null, Action<string> load=null) : base("Menu") {
             
-            var btnReturn = new Button("Close Menu", ButtonSkin.Default, Anchor.AutoCenter);
+            var btnReturn = new Button("Return to Editor", ButtonSkin.Default, Anchor.AutoCenter);
             btnReturn.OnClick += entity => Hide();
 
             var btnSaveMap = new Button("Save Map", ButtonSkin.Default, Anchor.AutoCenter);
             var btnLoadMap = new Button("Load Map", ButtonSkin.Default, Anchor.AutoCenter);
 
-            var exitButton = new Button("Exit", ButtonSkin.Default, Anchor.AutoCenter);
-            exitButton.OnClick += entity => { exit?.Invoke(); };
+            var exitButton = new Button("Main Menu", ButtonSkin.Default, Anchor.AutoCenter);
+            exitButton.OnClick += entity => {
+                Hide();
+                exit?.Invoke();
+            };
 
             var saveMenu = new SaveFilePopUp(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "HexGame"), "*.mapp", save);
             AddChildMenu(saveMenu);
@@ -41,5 +44,4 @@ namespace HexGame.UI {
 
         }
     }
-    
 }

@@ -47,6 +47,7 @@
 
         private const float HeightStep = 0.25f;
         public Texture2D Texture { get; }
+        private BasicEffect BasicEffect { get; }
         
 
         public HexMap(GraphicsDevice gd, int width, int height, Texture2D texture, SpriteFont font = null, MeshType meshType=MeshType.Flat) {
@@ -57,6 +58,7 @@
             MeshType = meshType;
 
             Texture = texture;
+            BasicEffect = new BasicEffect(gd);
             
             var hexHeight = HexMetrics.Height(HexSize);
             for (var x = 0; x < Width; x++) {
@@ -89,6 +91,8 @@
             Hexes = new List<Hexagon>();
             MeshType = MeshType.Flat;
             Texture = content.Load<Texture2D>(record.BaseTexture);
+            BasicEffect = new BasicEffect(gd);
+
             var hexHeight = HexMetrics.Height(HexSize);
             for (var x = 0; x < Width; x++) {
                 for (var y = 0; y < Height; y++) {
@@ -170,17 +174,20 @@
             return Hexes[y + x * Width];
         }
 
-        public void Draw(GraphicsDevice gd, BasicEffect effect, SpriteBatch spriteBatch, Camera camera) {
+        public void Draw(GraphicsDevice gd, SpriteBatch spriteBatch, Camera camera) {
+            BasicEffect.Projection = camera.ProjectionMatrix;
+            BasicEffect.View = camera.ViewMatrix;
+
             foreach (var mesh in Meshes) {
                 if (camera.Frustum.Intersects(mesh.BoundingBox)) {
-                    mesh.DrawHexes(gd, effect, camera, Wireframe);
+                    mesh.DrawHexes(gd, BasicEffect, camera, Wireframe);
                 }
             }
             
 
             if (ShowGrid) {
                 foreach (var mesh in Meshes) {
-                    mesh.DrawGrid(gd, effect);
+                    mesh.DrawGrid(gd, BasicEffect);
                 }
                 
             }
