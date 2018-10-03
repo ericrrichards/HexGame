@@ -84,6 +84,8 @@ namespace HexGame {
             return _previousMouse.ScrollWheelValue - _currentMouse.ScrollWheelValue;
         }
 
+        public Point MouseMovement => _currentMouse.Position - _previousMouse.Position;
+
 
 
         public void SetBinding(string vkey, params Keys[] keys) {

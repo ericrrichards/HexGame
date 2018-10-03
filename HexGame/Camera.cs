@@ -5,7 +5,7 @@
     using Microsoft.Xna.Framework.Graphics;
 
     public class Camera {
-        
+
         private Vector3 Position { get; set; }
         private Vector3 Right { get; set; }
         private Vector3 Up { get; set; }
@@ -108,18 +108,18 @@
 
         public void Update(GameTime gameTime) {
             var dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
-            
+
             if (_input.IsDown(Commands.CameraStrafeLeft)) {
-                Strafe(-dt*CameraSpeed);
+                Strafe(-dt * CameraSpeed);
             }
             if (_input.IsDown(Commands.CameraStrafeRight)) {
-                Strafe(dt*CameraSpeed);
+                Strafe(dt * CameraSpeed);
             }
             if (_input.IsDown(Commands.CameraForward)) {
-                Walk(-dt*CameraSpeed);
+                Walk(-dt * CameraSpeed);
             }
             if (_input.IsDown(Commands.CameraBackward)) {
-                Walk(dt*CameraSpeed);
+                Walk(dt * CameraSpeed);
             }
 
             if (_input.IsDown(Commands.CameraZoomIn)) {
@@ -129,22 +129,25 @@
                 Zoom(dt * CameraSpeed);
             }
             if (_input.IsDown(Commands.CameraOrbitRight)) {
-                Yaw(-dt*CameraSpeed);
+                Yaw(-dt * CameraSpeed);
             }
             if (_input.IsDown(Commands.CameraOrbitLeft)) {
-                Yaw(dt*CameraSpeed);
+                Yaw(dt * CameraSpeed);
             }
             if (_input.IsDown(Commands.CameraOrbitUp)) {
-                Pitch(dt*CameraSpeed);
+                Pitch(dt * CameraSpeed);
             }
             if (_input.IsDown(Commands.CameraOrbitDown)) {
-                Pitch(-dt*CameraSpeed);
+                Pitch(-dt * CameraSpeed);
             }
             var mouseScroll = _input.MouseScrolled();
             if (mouseScroll != 0) {
-                Zoom(dt * CameraSpeed * mouseScroll/10.0f);
+                Zoom(dt * CameraSpeed * mouseScroll / 10.0f);
             }
-            
+            if (_input.MouseDown(false)) {
+                Yaw(dt * CameraSpeed * _input.MouseMovement.X);
+                Pitch(dt * CameraSpeed * _input.MouseMovement.Y);
+            }
 
             UpdateViewMatrix();
         }
@@ -153,18 +156,18 @@
             Target += dt;
         }
         public void Walk(float d) {
-            Target += Vector3.Normalize(new Vector3(Look.X, 0, Look.Z)) *d;
+            Target += Vector3.Normalize(new Vector3(Look.X, 0, Look.Z)) * d;
         }
         public void Zoom(float dr) {
             _radius += dr;
             _radius = MathHelper.Clamp(_radius, 2.0f, 150.0f);
         }
-        public  void Yaw(float angle) {
-            _alpha = (_alpha + angle) % ((float)Math.PI*2.0f);
+        public void Yaw(float angle) {
+            _alpha = (_alpha + angle) % ((float)Math.PI * 2.0f);
         }
-        public  void Pitch(float angle) {
+        public void Pitch(float angle) {
             _beta += angle;
-            _beta = MathHelper.Clamp(_beta, 0.05f, (float)Math.PI/2.0f - 0.01f);
+            _beta = MathHelper.Clamp(_beta, 0.05f, (float)Math.PI / 2.0f - 0.01f);
         }
 
 
