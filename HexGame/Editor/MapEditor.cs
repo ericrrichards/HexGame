@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using GeonBit.UI;
 
 namespace HexGame.Editor {
     using System.IO;
@@ -61,7 +62,7 @@ namespace HexGame.Editor {
             Camera.SetLens(MathHelper.ToRadians(45), graphicsDevice.DisplayMode.AspectRatio, .01f, 1000f);
             Camera.LookAt(new Vector3(0, 10, 1), Vector3.Zero, Vector3.Up);
 
-            SettingsMenu = new SettingsMenu(Deactivate, SaveMap, LoadMap);
+            SettingsMenu = new SettingsMenu(Exit, SaveMap, LoadMap);
 
             EditorPanel = new MapEditorTools(content);
             Interface.AddEntity(EditorPanel);
@@ -75,6 +76,11 @@ namespace HexGame.Editor {
             Map = new HexMap(GraphicsDevice, 100, 100, texture, _font);
             MapResources.LoadContent(Content);
         }
+
+        private void Exit() {
+            Deactivate();
+        }
+
         private void LoadMap(string filename) {
             var newMap = HexMap.LoadFromFileProto(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "HexGame", filename + ".mapp"), GraphicsDevice, Content, _font);
             Map = newMap;
