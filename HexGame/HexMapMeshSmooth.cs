@@ -15,7 +15,7 @@
                 uint i = 0;
                 var vertToIndex = new Dictionary<Vector3, uint>(new Vector3Comparer());
                 foreach (var hexagon in hexes) {
-                    foreach (var tri in hexagon.Triangles) {
+                    foreach (var tri in hexagon.Geometry.Triangles) {
                         if (!vertToIndex.ContainsKey(tri.P0)) {
                             vertToIndex[tri.P0] = i++;
                             vertices.Add(new VertexPositionNormalTexture(tri.P0, Vector3.Up, tri.UV0));
@@ -30,7 +30,7 @@
                         }
                     }
                     foreach (var c in HexMetrics.IndexOrder) {
-                        var p = hexagon.Points[c];
+                        var p = hexagon.Geometry.Points[c];
                         indices.Add(vertToIndex[p]);
                     }
                 }

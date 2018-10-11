@@ -19,7 +19,7 @@
             var indices = new List<uint>();
             uint i = 0;
             foreach (var hex in hexes) {
-                var borderVerts = hex.Border;
+                var borderVerts = hex.Geometry.Border;
                 verts.AddRange(borderVerts.Select(v => new VertexPositionColor(v + new Vector3(0, .01f, 0), Color)));
                 indices.Add(i);
                 indices.Add(i + 1);

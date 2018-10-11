@@ -52,9 +52,9 @@
             set => H = ToLong(value);
         }
 
-        public HexRecord(Hexagon hex, float heightStep = 0.25f) {
+        public HexRecord(Hexagon hex) {
             Pos = ToShort(hex.MapPos);
-            H = ToLong(hex.Points.OrderBy(kv => kv.Key).Select(kv => (int)(kv.Value.Y / heightStep)).ToArray());
+            H = ToLong(hex.Geometry.Points.OrderBy(kv => kv.Key).Select(kv => (int)(kv.Value.Y / hex.Geometry.HeightStep)).ToArray());
             Mod = (byte)(hex.IsForest ? 1 : 0);
         }
 

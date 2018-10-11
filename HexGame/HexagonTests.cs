@@ -21,11 +21,11 @@
         [TestCase(1, 0, HexDirection.NorthEast, new[]{HexagonPoint.Left, HexagonPoint.BottomLeft})]
 
         public void GetMatchingPoints(int x, int y, HexDirection dir, HexagonPoint[] expected) {
-            var hex = new Hexagon(Position(x,y));
+            var hex = new Hexagon(new Point(x,y));
 
             var offset = HexMetrics.GetNeighborCoords(new Point(x,y), dir);
 
-            var neighbor = new Hexagon(Position(offset.X, offset.Y));
+            var neighbor = new Hexagon(offset);
 
             var ret = hex.GetMatchingPoints(neighbor);
             Assert.True(ret.Count == expected.Length, $"expected has {expected.Length} actual has {ret.Count}");
@@ -33,18 +33,6 @@
                 Assert.True(ret.Contains(hexagonPoint), hexagonPoint + " is missing!");
             }
 
-        }
-
-        private static Vector3 Position(int x, int y) {
-            var hexSize = 1.0f;
-            var hexHeight = HexMetrics.Height(hexSize);
-            var position = Vector3.Zero;
-            position.X += 1.5f * hexSize * x;
-            position.Z += hexHeight * y;
-            if (x % 2 == 1) {
-                position.Z += hexHeight / 2;
-            }
-            return position;
         }
     }
 }

@@ -6,46 +6,59 @@
 
     using Microsoft.Xna.Framework;
 
-    [DebuggerDisplay("{" + nameof(DebugDisplayString) + ",nq}")]
-    public class Hexagon {
-        internal string DebugDisplayString => $"{MapPos.X} {MapPos.Y}";
+    public class HexGeometry {
+        public float HeightStep => HexWidth/2;
         public float HexWidth { get; }
         public Vector3 Position { get; private set; }
-        public Point MapPos { get; set; }
-
         public Dictionary<HexagonPoint, Vector3> Points { get; }
         public BoundingBox BoundingBox { get; private set; }
         public List<Triangle> Triangles { get; private set; }
-        public List<Vector3> Border { get; private set; }
-        public Dictionary<HexDirection, Hexagon> Neighbors { get; } = new Dictionary<HexDirection, Hexagon>();
-        public int PatchID { get; set; }
+        public List<Vector3> Border => Points.Where(kv => kv.Key != HexagonPoint.Center).Select(kv => kv.Value).ToList();
 
-        public bool IsForest { get; set; }
-
-        public Hexagon(Vector3 position, float hexWidth = 1.0f) {
-            PatchID = -1;
+        public HexGeometry(Point mapPos, float hexWidth = 1.0f) {
             HexWidth = hexWidth;
-            Position = position;
-
+            Position = GetHexCenter(mapPos);
             Points = HexMetrics.PointOrder.ToDictionary(p => p, p => HexMetrics.GetPoint(p, Position, HexWidth));
-
             BuildBounds();
         }
+        private Vector3 GetHexCenter(Point pos) {
+            var hexHeight = HexMetrics.Height(HexWidth);
+            var position = Vector3.Zero;
+            position.X += 1.5f * HexWidth * pos.X;
+            position.Z += hexHeight * pos.Y;
+            if (pos.X % 2 == 1) {
+                position.Z += hexHeight / 2;
+            }
+            return position;
+        }
 
-        public Hexagon(Vector3 position, float hexWidth, HexRecord hexRecord, float heightStep) {
-            PatchID = -1;
-            HexWidth = hexWidth;
-            Position = position;
-
-            Points = HexMetrics.PointOrder.ToDictionary(p => p, p => HexMetrics.GetPoint(p, Position, HexWidth));
-            for (var i = 0; i < hexRecord.Heights.Length; i++) {
+        internal void AdjustHeights(int[] heights) {
+            for (var i = 0; i < heights.Length; i++) {
                 var point = Points[(HexagonPoint)i];
-                point.Y = hexRecord.Heights[i] * heightStep;
+                point.Y = heights[i] * HeightStep;
                 Points[(HexagonPoint)i] = point;
             }
             Position = Points[HexagonPoint.Center];
-            IsForest = hexRecord.Forested;
             BuildBounds();
+        }
+        public List<Vector3> GetMidPoints() {
+            return Border.Select(p => Vector3.Lerp(p, Position, 0.5f)).Union(new[] { Position }).ToList();
+        }
+        public float? IntersectedBy(Ray ray) {
+            var d = float.MaxValue;
+            var td = ray.Intersects(BoundingBox);
+            if (td == null) {
+                return null;
+            }
+            foreach (var tri in Triangles) {
+                td = ray.Intersects(tri);
+                if (td == null || !(td < d)) {
+                    continue;
+                }
+                d = td.Value;
+
+            }
+            return d;
         }
 
         private void BuildBounds() {
@@ -59,45 +72,9 @@
                 Triangles.Add(new Triangle(tri, uvs));
                 indices = indices.Skip(3).ToList();
             }
-            Border = Points.Where(kv => kv.Key != HexagonPoint.Center).Select(kv => kv.Value).ToList();
         }
-
-        public float? IntersectedBy(Ray ray) {
-            var d = float.MaxValue;
-            var td = ray.Intersects(BoundingBox);
-            if (td == null ) {
-                return null;
-            }
-            foreach (var tri in Triangles) {         
-                td = ray.Intersects(tri);
-                if (td == null || !(td < d)) {
-                    continue;
-                }
-                d = td.Value;
-                
-            }
-            return d;
-        }
-
-        public void Raise(float dy, HexagonPoint p=HexagonPoint.Center) {
-            var center=  Points[p];
-            center.Y += dy;
-            Points[p] = center;
-            if (p == HexagonPoint.Center) {
-                Position = center;
-            }
-            BuildBounds();
-        }
-        public void Raise(float dy, IEnumerable<HexagonPoint> points) {
-            foreach (var p in points) {
-                var center=  Points[p];
-                center.Y += dy;
-                Points[p] = center;
-            }
-            BuildBounds();
-        }
-
-        public bool CanRaisePoint(HexagonPoint p, float dy) {
+        public bool CanRaisePoint(HexagonPoint p, int amount) {
+            var dy = HeightStep * amount;
             var v = Points[p];
             var newHeight = v.Y + dy;
             var triangles = Triangles.Where(t => t.Points.Any(tp => tp == v));
@@ -110,16 +87,70 @@
             }
             return true;
         }
+        public void Raise(int dy, HexagonPoint p = HexagonPoint.Center) {
+            var point = Points[p];
+            point.Y += dy * HeightStep;
+            Points[p] = point;
+            if (p == HexagonPoint.Center) {
+                Position = point;
+            }
+            BuildBounds();
+        }
+    }
 
+    [DebuggerDisplay("{" + nameof(DebugDisplayString) + ",nq}")]
+    public class Hexagon {
+        private string DebugDisplayString => $"{MapPos.X} {MapPos.Y}";
+        public HexGeometry Geometry { get; }
+        
+        
+        public Point MapPos { get; }
+        public int Height { get; private set; }
 
-        public List<HexagonPoint> GetMatchingPoints(Hexagon neighbor) {
-            var comparer = new Vector3Comparer();
-            var points = Border.ToList();
-            return neighbor.Points.Where(np => points.Any(p => comparer.Equals(p, np.Value))).Select(np => np.Key).ToList();
+        
+        public int PatchID { get; set; } = -1;
+
+        public bool IsForest { get; set; }
+        public Dictionary<HexDirection, Hexagon> Neighbors { get; } = new Dictionary<HexDirection, Hexagon>();
+
+        public Hexagon(Point mapPosition, float hexWidth = 1.0f) {
+            MapPos = mapPosition;
+            Geometry = new HexGeometry(mapPosition, hexWidth);
+            Height = 0;
         }
 
-        public List<Vector3> GetMidPoints() {
-            return Border.Select(p => Vector3.Lerp(p, Position, 0.5f)).Union(new []{Position}).ToList();
+        public Hexagon(HexRecord hexRecord, float hexWidth = 1.0f) {
+            MapPos = hexRecord.MapPos;
+            Geometry = new HexGeometry(hexRecord.MapPos, hexWidth);
+            Height = hexRecord.Heights[(int)HexagonPoint.Center];
+            Geometry.AdjustHeights(hexRecord.Heights);
+            
+            IsForest = hexRecord.Forested;
+            
+        }
+        
+        public List<HexagonPoint> GetMatchingPoints(Hexagon neighbor) {
+            var comparer = new Vector3Comparer();
+            var points = Geometry.Border.ToList();
+            return neighbor.Geometry.Points.Where(np => points.Any(p => comparer.Equals(p, np.Value))).Select(np => np.Key).ToList();
+        }
+
+        public void Raise(HexagonPoint point) {
+            if (point == HexagonPoint.Center) {
+                Height++;
+            }
+            Geometry.Raise(1, point);
+        }
+
+        public void Lower(HexagonPoint point) {
+            if (point == HexagonPoint.Center) {
+                Height--;
+            }
+            Geometry.Raise(-1, point);
+        }
+
+        public bool CanRaisePoint(HexagonPoint point, int amount) {
+            return Geometry.CanRaisePoint(point, amount);
         }
     }
 }

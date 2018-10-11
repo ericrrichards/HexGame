@@ -27,7 +27,7 @@
 
 
 
-        public const float HexSize = 0.5f;
+        public const float HexSize = 1.0f;
         public List<Hexagon> Hexes { get; }
 
 
@@ -45,7 +45,6 @@
 
         private readonly SpriteFont _font;
 
-        private const float HeightStep = 0.25f;
         public Texture2D Texture { get; }
         private BasicEffect BasicEffect { get; }
         
@@ -60,13 +59,9 @@
             Texture = texture;
             BasicEffect = new BasicEffect(gd);
             
-            var hexHeight = HexMetrics.Height(HexSize);
             for (var x = 0; x < Width; x++) {
                 for (var y = 0; y < Height; y++) {
-                    var position = GetHexCenter(x, y, hexHeight);
-                    var hexagon = new Hexagon(position, HexSize) {
-                        MapPos = new Point(x, y)
-                    };
+                    var hexagon = new Hexagon(new Point(x, y), HexSize);
                     Hexes.Add(hexagon);
                 }
             }
@@ -74,14 +69,6 @@
 
             Rebuild(gd, true);
 
-        }
-
-        private void ConnectHexes() {
-            foreach (var hexagon in Hexes) {
-                foreach (HexDirection dir in Enum.GetValues(typeof(HexDirection))) {
-                    hexagon.Neighbors[dir] = GetHex(HexMetrics.GetNeighborCoords(hexagon.MapPos, dir));
-                }
-            }
         }
 
         private HexMap(GraphicsDevice gd, MapRecord record, ContentManager content, SpriteFont font=null) {
@@ -93,17 +80,13 @@
             Texture = content.Load<Texture2D>(record.BaseTexture);
             BasicEffect = new BasicEffect(gd);
 
-            var hexHeight = HexMetrics.Height(HexSize);
             for (var x = 0; x < Width; x++) {
                 for (var y = 0; y < Height; y++) {
                     var mapPos = new Point(x, y);
-                    var position = GetHexCenter(x, y, hexHeight);
                     var hexRecord = record.Hexes.First(h => h.MapPos == mapPos);
 
 
-                    var hexagon = new Hexagon(position, HexSize, hexRecord, HeightStep) {
-                        MapPos = mapPos
-                    };
+                    var hexagon = new Hexagon( hexRecord, HexSize);
                     Hexes.Add(hexagon);
                 }
             }
@@ -112,14 +95,12 @@
             Rebuild(gd, true);
         }
 
-        private Vector3 GetHexCenter(int x, int y, float hexHeight) {
-            var position = Vector3.Zero;
-            position.X += 1.5f * HexSize * x;
-            position.Z += hexHeight * y;
-            if (x % 2 == 1) {
-                position.Z += hexHeight / 2;
+        private void ConnectHexes() {
+            foreach (var hexagon in Hexes) {
+                foreach (HexDirection dir in Enum.GetValues(typeof(HexDirection))) {
+                    hexagon.Neighbors[dir] = GetHex(HexMetrics.GetNeighborCoords(hexagon.MapPos, dir));
+                }
             }
-            return position;
         }
 
         public void Rebuild(GraphicsDevice gd, bool force=false) {
@@ -194,7 +175,7 @@
             if (ShowCoords) {
                 DrawHexLabels(spriteBatch, camera, hex => $"{hex.MapPos.X}, {hex.MapPos.Y}");
             } else if (ShowHexHeights) {
-                DrawHexLabels(spriteBatch, camera, hex => $"{hex.Position.Y/HeightStep}");
+                DrawHexLabels(spriteBatch, camera, hex => $"{hex.Height}");
             }
         }
 
@@ -204,10 +185,10 @@
             }
             spriteBatch.Begin();
             foreach (var hex in Hexes) {
-                if (camera.Frustum.Contains(hex.Position) != ContainmentType.Contains) {
+                if (camera.Frustum.Contains(hex.Geometry.Position) != ContainmentType.Contains) {
                     continue;
                 }
-                var projected = spriteBatch.GraphicsDevice.Viewport.Project(hex.Position, camera.ProjectionMatrix, camera.ViewMatrix, camera.WorldMatrix);
+                var projected = spriteBatch.GraphicsDevice.Viewport.Project(hex.Geometry.Position, camera.ProjectionMatrix, camera.ViewMatrix, camera.WorldMatrix);
                 var screen = new Vector2(projected.X, projected.Y);
                 var pos = displayFunc(hex);
                 var m = _font.MeasureString(pos);
@@ -232,7 +213,7 @@
                     continue;
                 }
                 foreach (var hex in mesh.Hexes) {
-                    var td = hex.IntersectedBy(ray);
+                    var td = hex.Geometry.IntersectedBy(ray);
                     if (td == null || !(td < d)) {
                         continue;
                     }
@@ -261,28 +242,34 @@
             return vertex;
         }
         
-        private void RaiseVertex(Vector3 vertex, float dy) {
+        private void RaiseVertex(Vector3 vertex, int dy) {
             var comparer = new Vector3Comparer();
-            var affectedHexes = Hexes.Where(h => h.Points.Values.Any(v => comparer.Equals(v, vertex)))
+            var affectedHexes = Hexes.Where(h => h.Geometry.Points.Values.Any(v => comparer.Equals(v, vertex)))
                                      .Select(h => new {
                                          hex = h, 
-                                         point = h.Points.First(p=>comparer.Equals(p.Value, vertex)).Key
+                                         point = h.Geometry.Points.First(p=>comparer.Equals(p.Value, vertex)).Key
                                       }).ToList();
             if (!affectedHexes.All(h => h.hex.CanRaisePoint(h.point, dy))) {
                 return;
             }
             foreach (var affectedHex in affectedHexes) {
-                affectedHex.hex.Raise(dy, affectedHex.point);
+                if (dy > 0) {
+                    affectedHex.hex.Raise(affectedHex.point);
+                } else if (dy < 0) {
+                    affectedHex.hex.Lower(affectedHex.point);
+                } else {
+                    return;
+                }
             }
             affectedHexes.Select(h => h.hex.PatchID).Distinct().ToList().ForEach(i => DirtyPatches.Add(i));
         }
 
         public void RaiseVertex(Vector3 vertex) {
-            RaiseVertex(vertex, HeightStep);
+            RaiseVertex(vertex, 1);
         }
 
         public void LowerVertex(Vector3 vertex) {
-            RaiseVertex(vertex, -HeightStep);
+            RaiseVertex(vertex, -1);
         }
 
         public void SaveToFile(string filename) {
@@ -291,7 +278,7 @@
                 Width = Width,
                 Height = Height,
                 BaseTexture = Texture.Name,
-                Hexes = Hexes.Select(h => new HexRecord(h, HeightStep)).ToArray()
+                Hexes = Hexes.Select(h => new HexRecord(h)).ToArray()
             };
 
             File.WriteAllText(filename, JsonConvert.SerializeObject(record));
@@ -303,7 +290,7 @@
                 Width = Width,
                 Height = Height,
                 BaseTexture = Texture.Name,
-                Hexes = Hexes.Select(h => new HexRecord(h, HeightStep)).ToArray()
+                Hexes = Hexes.Select(h => new HexRecord(h)).ToArray()
             };
             var formatter = new BinaryFormatter();
             using (var stream = File.OpenWrite(filename)) {
@@ -317,7 +304,7 @@
                 Width = Width,
                 Height = Height,
                 BaseTexture = Texture.Name,
-                Hexes = Hexes.Select(h => new HexRecord(h, HeightStep)).ToArray()
+                Hexes = Hexes.Select(h => new HexRecord(h)).ToArray()
             };
             using (var stream = File.OpenWrite(filename)) {
                 Serializer.Serialize(stream, record);

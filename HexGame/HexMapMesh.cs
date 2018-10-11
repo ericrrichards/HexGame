@@ -40,16 +40,16 @@
             Vertices = new List<VertexPositionNormalTexture>();
             Indices = new List<uint>();
             TriangleCount = hexes.Count * 6;
-            HexSize = hexes[0].HexWidth;
+            HexSize = hexes[0].Geometry.HexWidth;
             foreach (var hexagon in hexes) {
                 hexagon.PatchID = PatchID;
             }
 
             builder.BuildGeometry(hexes, Vertices, Indices);
 
-            BoundingBox = hexes[0].BoundingBox;
+            BoundingBox = hexes[0].Geometry.BoundingBox;
             foreach (var hexagon in hexes.Skip(1)) {
-                BoundingBox = BoundingBox.CreateMerged(BoundingBox, hexagon.BoundingBox);
+                BoundingBox = BoundingBox.CreateMerged(BoundingBox, hexagon.Geometry.BoundingBox);
             }
 
             VertexBuffer = new VertexBuffer(gd, typeof(VertexPositionNormalTexture), Vertices.Count, BufferUsage.WriteOnly);
@@ -81,7 +81,7 @@
             
             foreach (var hex in Hexes) {
                 if (hex.IsForest) {
-                    foreach (var midPoint in hex.GetMidPoints()) {
+                    foreach (var midPoint in hex.Geometry.GetMidPoints()) {
                         DrawModel(model, camera, midPoint);
                     }
                 }

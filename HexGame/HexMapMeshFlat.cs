@@ -14,7 +14,7 @@
             public void BuildGeometry(List<Hexagon> hexes, List<VertexPositionNormalTexture> vertices, List<uint> indices) {
                 uint i = 0;
                 foreach (var hexagon in hexes) {
-                    foreach (var tri in hexagon.Triangles) {
+                    foreach (var tri in hexagon.Geometry.Triangles) {
                         vertices.Add(new VertexPositionNormalTexture(tri.P0, Vector3.Up, tri.UV0));
                         indices.Add(i++);
                         vertices.Add(new VertexPositionNormalTexture(tri.P1, Vector3.Up, tri.UV1));
