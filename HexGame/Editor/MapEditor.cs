@@ -82,13 +82,15 @@ namespace HexGame.Editor {
         }
 
         private void LoadMap(string filename) {
-            var newMap = HexMap.LoadFromFileProto(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "HexGame", filename + ".mapp"), GraphicsDevice, Content, _font);
+            var loader = new MapLoader();
+            var newMap = loader.LoadFromFileProto(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "HexGame", filename + ".mapp"), GraphicsDevice, Content, _font);
             Map = newMap;
 
         }
 
         private void SaveMap(string filename) {
-            Map.SaveToFileProto(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "HexGame", filename + ".mapp"));
+            var loader = new MapLoader();
+            loader.SaveToFileProto(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "HexGame", filename + ".mapp"), Map);
         }
 
         public override void Update(GameTime gameTime) {

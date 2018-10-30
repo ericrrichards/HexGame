@@ -63,6 +63,7 @@
     <Compile Include="HexMetrics.cs" />
     <Compile Include="HexRecordTests.cs" />
     <Compile Include="Input.cs" />
+    <Compile Include="MapLoader.cs" />
     <Compile Include="MapRecord.cs" />
     <Compile Include="MapResources.cs" />
     <Compile Include="Point3.cs" />

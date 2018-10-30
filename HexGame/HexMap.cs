@@ -1,20 +1,13 @@
 ﻿namespace HexGame {
     using System;
     using System.Collections.Generic;
-    using System.IO;
     using System.Linq;
-    using System.Net;
-    using System.Runtime.Serialization.Formatters.Binary;
 
     using JetBrains.Annotations;
 
     using Microsoft.Xna.Framework;
     using Microsoft.Xna.Framework.Content;
     using Microsoft.Xna.Framework.Graphics;
-
-    using Newtonsoft.Json;
-
-    using ProtoBuf;
 
     public enum MeshType {
         Smooth,
@@ -71,7 +64,7 @@
 
         }
 
-        private HexMap(GraphicsDevice gd, MapRecord record, ContentManager content, SpriteFont font=null) {
+        internal HexMap(GraphicsDevice gd, MapRecord record, ContentManager content, SpriteFont font=null) {
             _font = font;
             Width = record.Width;
             Height = record.Height;
@@ -271,68 +264,5 @@
         public void LowerVertex(Vector3 vertex) {
             RaiseVertex(vertex, -1);
         }
-
-        public void SaveToFile(string filename) {
-            var record = new MapRecord {
-                Name = Path.GetFileNameWithoutExtension(filename),
-                Width = Width,
-                Height = Height,
-                BaseTexture = Texture.Name,
-                Hexes = Hexes.Select(h => new HexRecord(h)).ToArray()
-            };
-
-            File.WriteAllText(filename, JsonConvert.SerializeObject(record));
-        }
-
-        public void SaveToFileBinary(string filename) {
-            var record = new MapRecord {
-                Name = Path.GetFileNameWithoutExtension(filename),
-                Width = Width,
-                Height = Height,
-                BaseTexture = Texture.Name,
-                Hexes = Hexes.Select(h => new HexRecord(h)).ToArray()
-            };
-            var formatter = new BinaryFormatter();
-            using (var stream = File.OpenWrite(filename)) {
-                formatter.Serialize(stream, record);
-            }
-        }
-
-        public void SaveToFileProto(string filename) {
-            var record = new MapRecord {
-                Name = Path.GetFileNameWithoutExtension(filename),
-                Width = Width,
-                Height = Height,
-                BaseTexture = Texture.Name,
-                Hexes = Hexes.Select(h => new HexRecord(h)).ToArray()
-            };
-            using (var stream = File.OpenWrite(filename)) {
-                Serializer.Serialize(stream, record);
-            }
-        }
-
-        public static HexMap LoadFromFile(string filename, GraphicsDevice gd, ContentManager content, SpriteFont font=null) {
-            var data = File.ReadAllText(filename);
-            var record = JsonConvert.DeserializeObject<MapRecord>(data);
-            return new HexMap(gd, record, content, font);
-        }
-        public static HexMap LoadFromFileBinary(string filename, GraphicsDevice gd, ContentManager content, SpriteFont font=null) {
-            using (var stream = File.OpenRead(filename)) {
-                var formatter = new BinaryFormatter();
-                var record = (MapRecord)formatter.Deserialize(stream);
-                return new HexMap(gd, record, content, font);
-            }
-            
-        }
-
-        public static HexMap LoadFromFileProto(string filename, GraphicsDevice gd, ContentManager content, SpriteFont font = null) {
-            using (var stream = File.OpenRead(filename)) {
-                var record = Serializer.Deserialize<MapRecord>(stream);
-                return new HexMap(gd, record, content, font);
-            }
-        }
-
     }
-
-    
 }
